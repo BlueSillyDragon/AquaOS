@@ -5,6 +5,8 @@ EFI_STATUS
 EFIAPI
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
+   InitializeLib(ImageHandle, SystemTable);
+ 
     EFI_STATUS Status;
     EFI_INPUT_KEY Key;
  

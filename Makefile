@@ -1,4 +1,4 @@
-CC = x86_64-elf-as
+CC = x86_64-elf-gcc
 CCFLAGS = -ffreestanding -c
 
 LD = elf_x86_64_efi.lds

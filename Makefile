@@ -1,10 +1,12 @@
-CC = x86_64-w64-mingw32-gcc
+CC = x86_64-elf-as
 CCFLAGS = -ffreestanding -c
-LDFLAGS = -nostdlib -Wl,-dll -shared -Wl,--subsystem,10 -e efi_main
+
+LD = elf_x86_64_efi.lds
+LDFLAGS = -nostdlib -Wl,-dll -shared -Wl, -T $(SRC_DIR)/boot/efi/$(GNU_EFI)/gnuefi/$(LD) -e efi_main
 
 SRC_DIR = src
 BUILD_DIR = build
-GNU_EFI = gnu-efi-3.0.17
+GNU_EFI = limine-efi
 
 .PHONY: all disk_image bootloader link clean always
 
@@ -25,10 +27,9 @@ bootloader: $(SRC_DIR)/LWDBOOT.o
 
 $(SRC_DIR)/LWDBOOT.o:
 		$(CC) $(CCFLAGS) -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc/x86_64 -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc/protocol -o $(SRC_DIR)/boot/efi/LWDBOOT.o $(SRC_DIR)/boot/efi/LWDBOOT.c
-		$(CC) $(CCFLAGS) -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc/x86_64 -I$(SRC_DIR)/boot/efi/$(GNU_EFI)/inc/protocol -o $(SRC_DIR)/boot/efi/data.o $(SRC_DIR)/boot/efi/$(GNU_EFI)/lib/data.c
 
 link:
-	$(CC) $(LDFLAGS) -o $(SRC_DIR)/boot/efi/BOOTX64.EFI $(SRC_DIR)/boot/efi/LWDBOOT.o $(SRC_DIR)/boot/efi/data.o
+	$(CC) $(LDFLAGS) -o $(SRC_DIR)/boot/efi/BOOTX64.EFI $(SRC_DIR)/boot/efi/LWDBOOT.o
 
 always:
 	mkdir -p $(BUILD_DIR)
@@ -36,5 +37,4 @@ always:
 clean:
 	rm -rf $(BUILD_DIR)/*
 	rm -rf $(SRC_DIR)/boot/efi/LWDBOOT.o
-	rm -rf $(SRC_DIR)/boot/efi/data.o
 	rm -rf $(SRC_DIR)/boot/efi/BOOTX64.EFI

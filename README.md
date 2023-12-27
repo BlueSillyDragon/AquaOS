@@ -12,31 +12,38 @@ It uses a custom UEFI Bootloader.
 
 If you don't already have the source code, you'll have to clone it using the following commands:
 
-```$ git clone https://github.com/BlueSillyDragon/LWD-OS.git```
-
-You can then move to the directory:
-
-```$ cd LWD-OS```
+```
+$ git clone https://github.com/BlueSillyDragon/LWD-OS.git
+$ cd LWD-OS
+```
 
 ### Step 2: Build LWD-OS
 
 First, cd to the 'efi' folder
 
-```$ cd src/boot/efi```
+```
+$ cd src/boot/efi
+```
 
 then run make
 
-```$ make```
+```
+$ make
+```
 
 ### Step 3: Run LWD-OS
 
 > [!WARNING]
 > You **MUST** have OVMF installed for this to work!
 > You can install ovmf using the following command (for Ubuntu/Debian)
-> ```$ sudo apt install ovmf```
+> ```
+> $ sudo apt install ovmf
+> ```
 
 Running LWD-OS is fairly easy, simply run the following command:
 
-```make run```
+```
+$ make run
+```
 
 And done!

@@ -8,7 +8,7 @@ It uses a custom UEFI Bootloader.
 > [!NOTE]
 > LWD-OS currently only has a basic bootloader done
 
-### Step 0: Clone repository
+### Step 1: Clone repository
 
 If you don't already have the source code, you'll have to clone it using the following commands:
 ```

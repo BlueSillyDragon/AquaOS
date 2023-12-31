@@ -1,6 +1,6 @@
 SRC_DIR = src
 BUILD_DIR = build
-BOOTEFI_DIR = $(SRC_DIR)/system/boot/efi
+BOOTEFI_DIR = $(SRC_DIR)/boot/efi
 
 OS_NAME=AquaOS
 

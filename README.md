@@ -54,3 +54,6 @@ After confirming ovmf is installed, open up the Makefile, located in the base fo
 qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -net none -cdrom $(BUILD_DIR)/$(OS_NAME).iso
 ```
 it should be at line 163, change `/usr/share/ovmf` to the installation directory of ovmf.
+
+## License
+AquaOS is under an MIT License.

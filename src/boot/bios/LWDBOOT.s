@@ -171,7 +171,7 @@ bootloader_msg db "AquaOS LEGACY BIOS BOOTLOADER", 0x0D, 0x0A, 0
 bootloader_loading_msg db "Loading Stage 2...", 0x0D, 0x0A, 0
 bootloader_error_msg db "ERROR READING FROM DISK!!!", 0x0D, 0x0A, 0
 bootloader_ext_error_msg db "YOUR BIOS DOES NOT SUPPORT EXTENSIONS!!! LWD-OS CANNOT LOAD!!!", 0x0D, 0x0A, 0
-bootloader_floppy_msg db "LWD-OS DOES NOT SUPPORT FLOPPY DRIVES!!!", 0x0D, 0x0A, 0
+bootloader_floppy_msg db "AquaOS DOES NOT SUPPORT FLOPPY DRIVES!!!", 0x0D, 0x0A, 0
 
 Disk_Address_Packet:
         db 0x10

@@ -42,7 +42,9 @@ override CFLAGS += \
     -fno-stack-check \
     -fshort-wchar \
     -fno-lto \
-    -fPIE
+    -fPIE \
+    -DPRINTF_SUPPORT_DECIMAL_SPECIFIERS=0 \
+    -DPRINTF_SUPPORT_EXPONENTIAL_SPECIFIERS=0
 
 override CPPFLAGS := \
     -I bootsrc \

@@ -1,22 +1,22 @@
-# LWD-OS
+# AquaOS
 A x86-64 64-bit OS for programmed in C/C++.
 
 It uses a custom UEFI Bootloader.
 
-## How to Build and Run LWD-OS
+## How to Build and Run AquaOS
 
 > [!NOTE]
-> LWD-OS currently only has a basic bootloader done
+> AquaOS currently only has a basic bootloader done
 
 ### Step 1: Clone repository
 
 If you don't already have the source code, you'll have to clone it using the following commands:
 ```
-$ git clone https://github.com/BlueSillyDragon/LWD-OS.git
-$ cd LWD-OS
+$ git clone https://github.com/BlueSillyDragon/AquaOS.git
+$ cd AquaOS
 ```
 
-### Step 2: Build LWD-OS
+### Step 2: Build AquaOS
 
 First, cd to the 'efi' folder
 ```
@@ -27,7 +27,7 @@ then run make
 $ make
 ```
 
-### Step 3: Run LWD-OS
+### Step 3: Run AquaOS
 
 > [!WARNING]
 > You **MUST** have OVMF installed for this to work!
@@ -36,12 +36,12 @@ $ make
 > $ sudo apt install ovmf
 > ```
 
-Running LWD-OS is fairly easy, simply run the following command:
+Running AquaOS is fairly easy, simply run the following command:
 ```
 $ make run
 ```
 
-And done, you should now see the text 'LWD-OS Bootloader has successfully started!'
+And done, you should now see the text 'AquaOS Bootloader has loaded successfully!'
 
 If it does not work, make sure you have ovmf installed, you can check with
 ```
@@ -49,8 +49,8 @@ $ whereis ovmf
 ```
 it should display something like `ovmf: /usr/share/ovmf` if it's installed.
 
-After confirming ovmf is installed, open up the Makefile, located in efi, then find this line.
+After confirming ovmf is installed, open up the Makefile, located in the base folder, then find this line.
 ```
-qemu-system-$(ARCH) -net none -M q35 -bios /usr/share/ovmf/OVMF.fd -drive file=fat:rw:boot
+qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -net none -cdrom $(BUILD_DIR)/$(OS_NAME).iso
 ```
 it should be at line 163, change `/usr/share/ovmf` to the installation directory of ovmf.

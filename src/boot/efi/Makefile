@@ -112,7 +112,7 @@ override OBJ := $(addprefix obj/,$(CFILES:.c=.c.o))
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d))
 
 .PHONY: all
-all: bin/LWDBOOT.EFI
+all: bin/AQUABOOT.EFI
 
 limine-efi/gnuefi/crt0-efi-$(ARCH).S: limine-efi
 
@@ -129,11 +129,11 @@ limine-efi/gnuefi/elf_$(ARCH)_efi.lds: limine-efi
 limine-efi:
 	git clone https://github.com/limine-bootloader/limine-efi.git --depth=1
 
-bin/LWDBOOT.EFI: bin/LWDBOOT.elf Makefile
+bin/AQUABOOT.EFI: bin/AQUABOOT.elf Makefile
 	mkdir -p "$$(dirname $@)"
 	$(OBJCOPY) -O binary $< $@
 
-bin/LWDBOOT.elf: Makefile limine-efi/gnuefi/elf_$(ARCH)_efi.lds limine-efi/gnuefi/crt0-efi-$(ARCH).S.o limine-efi/gnuefi/reloc_$(ARCH).c.o $(OBJ)
+bin/AQUABOOT.elf: Makefile limine-efi/gnuefi/elf_$(ARCH)_efi.lds limine-efi/gnuefi/crt0-efi-$(ARCH).S.o limine-efi/gnuefi/reloc_$(ARCH).c.o $(OBJ)
 	mkdir -p "$$(dirname $@)"
 	$(LD) limine-efi/gnuefi/crt0-efi-$(ARCH).S.o limine-efi/gnuefi/reloc_$(ARCH).c.o $(OBJ) $(LDFLAGS) -o $@
 

@@ -17,6 +17,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     if (EFI_ERROR(Status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"COULD NOT LOCATE GOP!!!\r\n");
     }
+
     else {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"GOP Located successfully!\r\n");
     }
@@ -36,21 +37,46 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         printf_("Working!\r\n");
         nativeMode = gop->Mode->Mode;
         numModes = gop->Mode->MaxMode;
+        printf_("numberOfModes: %u, nativeMode: %u\r\n", numModes, nativeMode);
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Video mode obtained!\r\n");
     }
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Retrieving avaliable video modes...\r\n");
 
-    for (int i = 0; i < numModes; i++) {
-    Status = (gop->QueryMode, 4, gop, i, &SizeOfInfo, &info);
-    printf_("mode %d width %d height %d format %x%s\r\n",
-    i,
-    info->HorizontalResolution,
-    info->VerticalResolution,
-    info->PixelFormat,
-    i == nativeMode ? "(current)" : ""
-  );
-}
+    for (UINTN i = 0; i < numModes; i++) {
+        gop->QueryMode(&gop, i, &SizeOfInfo, &info);
+        printf_("mode %03d width %d height %d format %x%s\r\n",
+        i,
+        info->HorizontalResolution,
+        info->VerticalResolution,
+        info->PixelFormat,
+        i == nativeMode ? "(current)" : ""
+        );
+    }
+
+    Status = (gop->SetMode, 2, gop, 0);
+    if(EFI_ERROR(Status)) {
+        printf_("Unable to set mode %03d\r\n", 3);
+    } 
+    
+    else {
+    // get framebuffer
+        printf_("Framebuffer address %x size %d, width %d height %d pixelsperline %d\r\n",
+        gop->Mode->FrameBufferBase,
+        gop->Mode->FrameBufferSize,
+        gop->Mode->Info->HorizontalResolution,
+        gop->Mode->Info->VerticalResolution,
+        gop->Mode->Info->PixelsPerScanLine
+    );
+  }
+
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pixel;
+
+    pixel->Red = (UINT8)4;
+    pixel->Green = (UINT8)25;
+    pixel->Blue = (UINT8)184;
+
+    printf_("pixel values: r:%x g:%x b:%x\r\n", pixel->Red, pixel->Green, pixel->Blue);
 
     for (;;);
 }

@@ -4,12 +4,14 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+void PlotPixels(int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop);
+unsigned int *parseTga (unsigned char *ptr, int size);
+
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS Status;
     UINTN MapKey;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"AquaOS Bootloader has loaded successfully!\r\n");
-    printf_("Hello! %d \r\n", 10);
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Attempting to locate GOP...\r\n");
@@ -58,7 +60,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Setting video mode...\r\n");
 
-    Status = gop->SetMode(gop, 9);
+    Status = gop->SetMode(gop, 21);
     if(EFI_ERROR(Status)) {
         printf_("Unable to set mode %03d\r\n", 3);
     } 
@@ -81,15 +83,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     pixel->Blue = (UINT8)222;
 
     printf_("pixel values: r:%x g:%x b:%x\r\n", pixel->Red, pixel->Green, pixel->Blue);
-
-    EFI_GRAPHICS_OUTPUT_BLT_OPERATION BltOp;
     
     UINTN sourceX = (UINTN)0;
     UINTN sourceY = (UINTN)0;
     UINTN destX = (UINTN)0;
     UINTN destY = (UINTN)0;
-    UINTN width = (UINTN)1280;
-    UINTN height = (UINTN)720;
+    UINTN width = (UINTN)1680;
+    UINTN height = (UINTN)1050;
 
     Status = gop->Blt(gop, pixel, EfiBltVideoFill, sourceX, sourceY, destX, destY, width, height, NULL);
 
@@ -97,5 +97,23 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         printf_("ERROR TRYING TO BLOCK TRANSFER TO SCREEN!!!\r\n");
     }
 
+    uint32_t pixie = 0x4120;
+
+    printf_("pixie stores: %x\r\n", pixie);
+
+    for (int i = 0; i < 300; i++) {
+        PlotPixels(i, i, pixie, gop);
+    }
+
     for (;;);
 }
+
+void PlotPixels (int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop) {
+    uint32_t pixelbytes = (uint32_t)4;
+    uint32_t pitch = pixelbytes * gop->Mode->Info->PixelsPerScanLine;
+    *((uint32_t*) (gop->Mode->FrameBufferBase + pitch * y + 4 * x)) = pixel;
+}
+
+unsigned int *parseTga (unsigned char *ptr, int size) {
+    return NULL;
+};

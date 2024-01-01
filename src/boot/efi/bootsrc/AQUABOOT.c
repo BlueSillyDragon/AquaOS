@@ -54,7 +54,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         );
     }
 
-    Status = gop->SetMode(gop, 0);
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Video modes retrieved!\r\n");
+
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Setting video mode...\r\n");
+
+    Status = gop->SetMode(gop, 9);
     if(EFI_ERROR(Status)) {
         printf_("Unable to set mode %03d\r\n", 3);
     } 
@@ -72,11 +76,26 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pixel;
 
-    pixel->Red = (UINT8)4;
-    pixel->Green = (UINT8)25;
-    pixel->Blue = (UINT8)184;
+    pixel->Red = (UINT8)43;
+    pixel->Green = (UINT8)96;
+    pixel->Blue = (UINT8)222;
 
     printf_("pixel values: r:%x g:%x b:%x\r\n", pixel->Red, pixel->Green, pixel->Blue);
+
+    EFI_GRAPHICS_OUTPUT_BLT_OPERATION BltOp;
+    
+    UINTN sourceX = (UINTN)0;
+    UINTN sourceY = (UINTN)0;
+    UINTN destX = (UINTN)0;
+    UINTN destY = (UINTN)0;
+    UINTN width = (UINTN)1280;
+    UINTN height = (UINTN)720;
+
+    Status = gop->Blt(gop, pixel, EfiBltVideoFill, sourceX, sourceY, destX, destY, width, height, NULL);
+
+    if (EFI_ERROR(Status)) {
+        printf_("ERROR TRYING TO BLOCK TRANSFER TO SCREEN!!!\r\n");
+    }
 
     for (;;);
 }

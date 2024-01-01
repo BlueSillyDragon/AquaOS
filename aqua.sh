@@ -1,4 +1,4 @@
-cd src/system/boot/efi
+cd src/boot/efi
 make clean
 make
 cd ../../../..

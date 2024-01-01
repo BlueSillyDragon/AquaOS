@@ -1,4 +1,6 @@
 # AquaOS
+![logo-color](https://github.com/BlueSillyDragon/AquaOS/assets/137140267/6f4ebc66-f195-4c9b-aef8-98412433e9f4)
+
 A x86-64 64-bit OS for programmed in C/C++.
 
 It uses a custom UEFI Bootloader.

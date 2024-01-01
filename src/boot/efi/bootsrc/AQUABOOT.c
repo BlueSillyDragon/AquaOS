@@ -13,7 +13,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Attempting to locate GOP...\r\n");
-    Status = (SystemTable->BootServices->LocateProtocol, 3, &gopGuid, NULL, (void**)&gop);
+    Status = SystemTable->BootServices->LocateProtocol(&gopGuid, NULL, (void**)&gop);
     if (EFI_ERROR(Status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"COULD NOT LOCATE GOP!!!\r\n");
     }
@@ -24,9 +24,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Obtaining current video mode...\r\n");
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
     UINTN SizeOfInfo, numModes, nativeMode;
-    Status = (gop->QueryMode, 4, gop, gop->Mode==NULL?0:gop->Mode->Mode, &SizeOfInfo, &info);
+    Status = gop->QueryMode(gop, gop->Mode==NULL?0:gop->Mode->Mode, &SizeOfInfo, &info);
     if (Status == EFI_NOT_STARTED) {
-        Status = (gop->SetMode, 2, gop, 0);
+        Status = gop->SetMode(gop, 0);
     }
     
     if (EFI_ERROR(Status)) {
@@ -43,8 +43,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Retrieving avaliable video modes...\r\n");
 
-    for (UINTN i = 0; i < numModes; i++) {
-        gop->QueryMode(&gop, i, &SizeOfInfo, &info);
+    for (int i = 0; i < numModes; i++) {
+        gop->QueryMode(gop, i, &SizeOfInfo, &info);
         printf_("mode %03d width %d height %d format %x%s\r\n",
         i,
         info->HorizontalResolution,
@@ -54,7 +54,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         );
     }
 
-    Status = (gop->SetMode, 2, gop, 0);
+    Status = gop->SetMode(gop, 0);
     if(EFI_ERROR(Status)) {
         printf_("Unable to set mode %03d\r\n", 3);
     } 

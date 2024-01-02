@@ -64,7 +64,7 @@ Now run the command below:
 $ make run
 ```
 
-And done, you should now see a blue screen, you can also look at the serial log if you please.
+And done, you should now see a blue screen along with the AquaOS logo, you can also look at the serial log if you please.
 
 If it does not work, make sure you have ovmf installed, you can check with
 ```

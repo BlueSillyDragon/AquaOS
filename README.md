@@ -1,9 +1,7 @@
 # AquaOS
 ![aquaos_logo](https://github.com/BlueSillyDragon/AquaOS/assets/137140267/a5a036a3-5ffe-4dd5-b629-f7fca611a3f1)
 
-A x86-64 64-bit OS for programmed in C/C++.
-
-It uses a custom UEFI Bootloader.
+AquaOS is a hobby operating system built from scratch for x86, written in C/C++.
 
 ## How to Build and Run AquaOS
 
@@ -79,7 +77,7 @@ qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -net none -cdrom $(BUILD_DIR)/$
 it should be at line 163, change `/usr/share/ovmf/` to the installation directory of ovmf.
 
 ## Technologies
-Uses eyalroz's printf lib, and limine-efi as a UEFI library.
+Uses eyalroz's printf lib, limine-efi as a UEFI library, and AQUABOOT is the custom bootloader.
 
 ## License
 AquaOS is under an MIT License.

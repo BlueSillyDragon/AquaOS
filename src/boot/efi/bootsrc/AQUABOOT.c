@@ -4,8 +4,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "icon/logo.h"
+
 void PlotPixels(int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop);
-unsigned int *parseTga (unsigned char *ptr, int size);
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -97,12 +98,28 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         printf_("ERROR TRYING TO BLOCK TRANSFER TO SCREEN!!!\r\n");
     }
 
-    uint32_t pixie = 0x4120;
+    uint32_t pixie;
+    int x;
+    int y;
 
     printf_("pixie stores: %x\r\n", pixie);
 
-    for (int i = 0; i < 300; i++) {
-        PlotPixels(i, i, pixie, gop);
+    for (int i = 0; i < 810000; i++) {
+        int offsetX = 540;
+        int offsetY = 300;
+
+        if (x >= AQUAOS_LOGO_WIDTH) {
+            x = 0;
+            y++;
+        }
+
+        if (y == AQUAOS_LOGO_HEIGHT) {
+            break;
+        }
+
+        pixie = aquaos_logo[i];
+        PlotPixels((x + offsetX), (y + offsetY), pixie, gop);
+        x++;
     }
 
     for (;;);
@@ -113,7 +130,3 @@ void PlotPixels (int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop
     uint32_t pitch = pixelbytes * gop->Mode->Info->PixelsPerScanLine;
     *((uint32_t*) (gop->Mode->FrameBufferBase + pitch * y + 4 * x)) = pixel;
 }
-
-unsigned int *parseTga (unsigned char *ptr, int size) {
-    return NULL;
-};

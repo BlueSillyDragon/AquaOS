@@ -155,6 +155,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     printf_("MemoryMap:%x\r\n", &MemoryMap);
 
+    MemoryMapSize += (2 * DescriptorSize);
+
     Status = SystemTable->BootServices->GetMemoryMap(
     &MemoryMapSize,
     MemoryMap, 
@@ -171,6 +173,25 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
             PlotPixels(x, y, pixie, gop);
             y++;
         }
+
+        switch (Status)
+        {
+        case EFI_SUCCESS:
+            printf_("EFI_SUCCESS\r\n");
+            break;
+        case EFI_BUFFER_TOO_SMALL:
+            printf_("EFI_BUFFER_TOO_SMALL\r\n");
+            break;
+        case EFI_INVALID_PARAMETER:
+            printf_("EFI_INVALID_PARAMETER\r\n");
+            break;
+        
+        default:
+            break;
+        }
+
+        SystemTable->BootServices->FreePool(MemoryMap);
+
         for(;;);
     }
 

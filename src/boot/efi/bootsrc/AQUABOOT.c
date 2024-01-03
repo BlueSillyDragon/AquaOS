@@ -4,15 +4,26 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "icon/logo.h"
-
-void PlotPixels(int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop);
-
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS Status;
     UINTN MapKey;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"AquaOS Bootloader has loaded successfully!\r\n");
+
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Setting Watchdog timer...\r\n");
+
+    // Disable the watchdog timer, so the bootloader doesn't time out
+    Status = SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
+
+    if (EFI_ERROR(Status)) {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"ERROR TRYING TO SET WATCHDOG TIMER\r\n");
+        printf_("ERROR TRYING TO SET WATCHDOG TIMER\r\n");
+    }
+
+    else {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Watchdog timer set!\r\n");
+    }
+
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Attempting to locate GOP...\r\n");
@@ -37,7 +48,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     }
 
     else {
-        printf_("Working!\r\n");
         nativeMode = gop->Mode->Mode;
         numModes = gop->Mode->MaxMode;
         printf_("numberOfModes: %u, nativeMode: %u\r\n", numModes, nativeMode);
@@ -63,7 +73,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     Status = gop->SetMode(gop, 21);
     if(EFI_ERROR(Status)) {
-        printf_("Unable to set mode %03d\r\n", 3);
+        printf_("Unable to set mode %03d\r\n", 21);
     } 
     
     else {
@@ -104,29 +114,66 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     printf_("pixie stores: %x\r\n", pixie);
 
-    for (int i = 0; i < 810000; i++) {
-        int offsetX = 540;
-        int offsetY = 300;
+    displayLogo(x, y, 540, 315, pixie, gop);
 
-        if (x >= AQUAOS_LOGO_WIDTH) {
-            x = 0;
-            y++;
-        }
+    //Get a memory map
+    
+    printf_("Obtaining the memorymap...\r\n");
 
-        if (y == AQUAOS_LOGO_HEIGHT) {
-            break;
-        }
+    UINTN MemoryMapSize;
+    EFI_MEMORY_DESCRIPTOR *MemoryMap;
+    UINTN Mapkey;
+    UINTN DescriptorSize;
+    UINT32 DescriptorVersion;
 
-        pixie = aquaos_logo[i];
-        PlotPixels((x + offsetX), (y + offsetY), pixie, gop);
-        x++;
+    //Get the size of the memory map
+    MemoryMapSize = 0;
+    MemoryMap = NULL;
+
+    Status = SystemTable->BootServices->GetMemoryMap(
+    &MemoryMapSize, 
+    MemoryMap, 
+    &MapKey, 
+    &DescriptorSize, 
+    &DescriptorVersion);
+
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+        printf_("Needed MemoryMapSize:%d\r\n", MemoryMapSize);
     }
 
-    for (;;);
-}
+    else {
+        printf_("ERROR TRYING TO RETRIEVE MEMORY MAP SIZE!!! BOOTLOADER CANNOT CONTINUE\r\n");
+        for (;;);
+    }
 
-void PlotPixels (int x, int y, uint32_t pixel, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop) {
-    uint32_t pixelbytes = (uint32_t)4;
-    uint32_t pitch = pixelbytes * gop->Mode->Info->PixelsPerScanLine;
-    *((uint32_t*) (gop->Mode->FrameBufferBase + pitch * y + 4 * x)) = pixel;
+    Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, (MemoryMapSize + (2 * DescriptorSize)), (void**)&MemoryMap);
+
+    if (EFI_ERROR(Status)) {
+        printf_("ERROR TRYING TO ALLOCATE MEMORY FOR MEMORY MAP!!! BOOTLOADER CAN NOT PROCEED\r\n");
+        for (;;);
+    }
+
+    printf_("MemoryMap:%x\r\n", &MemoryMap);
+
+    Status = SystemTable->BootServices->GetMemoryMap(
+    &MemoryMapSize,
+    MemoryMap, 
+    &MapKey, 
+    &DescriptorSize, 
+    &DescriptorVersion);
+
+    if (EFI_ERROR(Status)) {
+        printf_("ERROR WHILE TRYING TO OBTAIN MEMORY MAP, BOOTLOADER CAN NOT PROCEED!!!\r\n");
+        pixie = 0x11fe92;
+        x=0;
+        y-0;
+        for (int i = 0; i < 100; i++) {
+            PlotPixels(x, y, pixie, gop);
+            y++;
+        }
+        for(;;);
+    }
+
+    for(;;);
+
 }

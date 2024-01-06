@@ -5,6 +5,10 @@ AquaOS is a hobby operating system built from scratch for x86, written in C/C++.
 
 ## How to Build and Run AquaOS
 
+>[!CAUTION]
+> AquaBoot has been switched to using C++, as a result, for some reason, AquaOS will not compile correctly.
+> See "Issues" for more info. Sorry for the inconvinence.
+
 > [!NOTE]
 > AquaOS currently only has a basic bootloader done
 

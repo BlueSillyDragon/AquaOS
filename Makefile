@@ -7,7 +7,7 @@ OS_NAME=AquaOS
 .PHONY: all disk_image make_iso run bootloader clean always
 
 make_iso: always disk_image
-	mcopy -i $(BUILD_DIR)/$(OS_NAME).img $(BOOTEFI_DIR)/bin/AQUABOOT.EFI ::/EFI/BOOT/BOOTX64.EFI
+	mcopy -i $(BUILD_DIR)/$(OS_NAME).img $(BOOTEFI_DIR)/bin/AquaBoot.EFI ::/EFI/BOOT/BOOTX64.EFI
 	xorriso -as mkisofs -R -f -e $(OS_NAME).img -no-emul-boot -o $(BUILD_DIR)/$(OS_NAME).iso $(BUILD_DIR)
 
 disk_image:

@@ -1,13 +1,9 @@
 # AquaOS
 ![aquaos_logo](https://github.com/BlueSillyDragon/AquaOS/assets/137140267/a5a036a3-5ffe-4dd5-b629-f7fca611a3f1)
 
-AquaOS is a hobby operating system built from scratch for x86, written in C/C++.
+AquaOS is a hobby operating system built from scratch for x86, written in C++.
 
 ## How to Build and Run AquaOS
-
->[!CAUTION]
-> AquaBoot has been switched to using C++, as a result, for some reason, AquaOS will not compile correctly.
-> See "Issues" for more info. Sorry for the inconvinence.
 
 > [!NOTE]
 > AquaOS currently only has a basic bootloader done
@@ -83,7 +79,7 @@ it should be at line 163, change `/usr/share/ovmf/` to the installation director
 Also make sure you have xorriso installed.
 
 ## Technologies
-Uses eyalroz's printf lib, limine-efi as a UEFI library, and AQUABOOT is the custom bootloader.
+Uses eyalroz's printf lib, limine-efi as a UEFI library, and AquaBoot is the custom bootloader.
 
 ## License
 AquaOS is under an MIT License.

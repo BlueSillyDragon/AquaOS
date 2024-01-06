@@ -51,10 +51,10 @@ $ make
 ### Step 3: Run AquaOS
 
 > [!WARNING]
-> You **MUST** have OVMF installed for this to work!
-> You can install ovmf using the following command (for Ubuntu/Debian)
+> You **MUST** have OVMF and Xorriso installed for this to work!
+> You can install them using the following command (for Ubuntu/Debian)
 > ```
-> $ sudo apt install ovmf
+> $ sudo apt install ovmf xorriso
 > ```
 
 Running AquaOS is fairly easy, first, cd back to the base directory:
@@ -79,6 +79,8 @@ After confirming ovmf is installed, open up the Makefile, located in the base fo
 qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -net none -cdrom $(BUILD_DIR)/$(OS_NAME).iso
 ```
 it should be at line 163, change `/usr/share/ovmf/` to the installation directory of ovmf.
+
+Also make sure you have xorriso installed.
 
 ## Technologies
 Uses eyalroz's printf lib, limine-efi as a UEFI library, and AQUABOOT is the custom bootloader.

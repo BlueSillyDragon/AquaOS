@@ -15,7 +15,15 @@ If you don't already have the source code, you'll have to clone it using the fol
 $ git clone https://github.com/BlueSillyDragon/AquaOS.git
 $ cd AquaOS
 ```
-### Step 1.5: Build/Run AquaOS (shell)
+### Step 2: Install Dependencies
+
+you'll need to install the needed tools to be able to build
+AquaOS.
+```
+$ sudo apt install make mtools g++ xorriso qemu-system-x86 ovmf
+```
+
+### Step 2.5: Build/Run AquaOS (shell)
 
 You can build and run AquaOS using the included `aqua.sh` file.
 simply run
@@ -46,13 +54,6 @@ $ make
 
 ### Step 3: Run AquaOS
 
-> [!WARNING]
-> You **MUST** have OVMF and Xorriso installed for this to work!
-> You can install them using the following command (for Ubuntu/Debian)
-> ```
-> $ sudo apt install ovmf xorriso
-> ```
-
 Running AquaOS is fairly easy, first, cd back to the base directory:
 ```
 cd ../../../
@@ -74,9 +75,9 @@ After confirming ovmf is installed, open up the Makefile, located in the base fo
 ```
 qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -net none -cdrom $(BUILD_DIR)/$(OS_NAME).iso
 ```
-it should be at line 163, change `/usr/share/ovmf/` to the installation directory of ovmf.
+it should be at line 163, change `/usr/share/ovmf/` to the installation directory of ovmf (If the installation directory is something else).
 
-Also make sure you have xorriso installed.
+Also make sure you have the other dependencies installed.
 
 ## Technologies
 Uses eyalroz's printf lib, limine-efi as a UEFI library, and AquaBoot is the custom bootloader.

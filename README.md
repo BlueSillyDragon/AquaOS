@@ -9,8 +9,8 @@ AquaOS is a hobby operating system built from scratch for x86, written in C++.
 > AquaOS currently only has a basic bootloader done
 
 > [!WARNING]
-> I could only get AquaOS to build on Linux
-> It is unknown if it will build on Windows
+> I could only get AquaOS to build on Linux.
+> It is unknown if it will build on Windows.
 
 ### Step 1: Clone repository
 

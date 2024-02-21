@@ -1,35 +1,35 @@
-# AquaOS
-![aquaos_logo](https://github.com/BlueSillyDragon/AquaOS/assets/137140267/a5a036a3-5ffe-4dd5-b629-f7fca611a3f1)
+# OrigamiOS
+![logo-color](https://github.com/BlueSillyDragon/OrigamiOS/assets/137140267/ffb32a89-6194-4d9e-b8a6-74e0e6ccd936)
 
-AquaOS is a hobby operating system built from scratch for x86, written in C++.
+OrigamiOS is a hobby operating system built from scratch for x86, written in C++.
 
-## How to Build and Run AquaOS
+## How to Build and Run OrigamiOS
 
 > [!NOTE]
-> AquaOS currently only has a basic bootloader done
+> OrigamiOS currently only has a basic bootloader done
 
 > [!WARNING]
-> I could only get AquaOS to build on Linux.
+> I could only get OrigamiOS to build on Linux.
 > It is unknown if it will build on Windows.
 
 ### Step 1: Clone repository
 
 If you don't already have the source code, you'll have to clone it using the following commands:
 ```
-$ git clone https://github.com/BlueSillyDragon/AquaOS.git
-$ cd AquaOS
+$ git clone https://github.com/BlueSillyDragon/OrigamiOS.git
+$ cd OrigamiOS
 ```
 ### Step 2: Install Dependencies
 
 you'll need to install the needed tools to be able to build
-AquaOS.
+OrigamiOS.
 ```
 $ sudo apt install make mtools g++ xorriso qemu-system-x86 ovmf
 ```
 
-### Step 2.5: Build/Run AquaOS (shell)
+### Step 2.5: Build/Run OrigamiOS (shell)
 
-You can build and run AquaOS using the included `aqua.sh` file.
+You can build and run OrigamiOS using the included `aqua.sh` file.
 simply run
 ```
 $ ./aqua.sh
@@ -43,9 +43,9 @@ And you should be met with a blue screen.
 > ```
 > Run the shell file again, and now it should work.
 
-Below are the steps to make and run AquaOS manually.
+Below are the steps to make and run OrigamiOS manually.
 
-### Step 2: Build AquaOS
+### Step 2: Build OrigamiOS
 
 First, cd to the 'efi' folder
 ```
@@ -56,9 +56,9 @@ then run make
 $ make
 ```
 
-### Step 3: Run AquaOS
+### Step 3: Run OrigamiOS
 
-Running AquaOS is fairly easy, first, cd back to the base directory:
+Running OrigamiOS is fairly easy, first, cd back to the base directory:
 ```
 cd ../../../
 ```
@@ -67,7 +67,7 @@ Now run the command below:
 $ make run
 ```
 
-And done, you should now see a blue screen along with the AquaOS logo, you can also look at the serial log if you please.
+And done, you should now see a blue screen along with the AquaOS (Have not changed bootloader's logo yet) logo, you can also look at the serial log if you please.
 
 If it does not work, make sure you have ovmf installed, you can check with
 ```

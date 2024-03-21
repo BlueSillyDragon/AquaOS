@@ -5,7 +5,7 @@ jmp short bootloader_start
 nop
 
 ; BIOS PARAMETER BLOCK
-OEM_IDENTIFIER      db "AQUAOS1.0"
+OEM_IDENTIFIER      db "AQUAOS"
 BytesPerSector      dw 0x0200
 SectorsPerCluster   db 0x08
 ReservedSectors     dw 0x0020
@@ -33,7 +33,7 @@ DriveNumber         db 0x80
 ReservedBytes       db 0x00
 Signature           db 0x28
 VolumeNumber        dw 0xef02
-VolumeLabel         db "AquaOS 1.0 "
+VolumeLabel         db "AQUAOS 1.0 "
 SystemIdentifier    db "FAT32   "
 
 bootloader_start:
@@ -170,7 +170,7 @@ no_extensions:
 bootloader_msg db "AquaOS LEGACY BIOS BOOTLOADER", 0x0D, 0x0A, 0
 bootloader_loading_msg db "Loading Stage 2...", 0x0D, 0x0A, 0
 bootloader_error_msg db "ERROR READING FROM DISK!!!", 0x0D, 0x0A, 0
-bootloader_ext_error_msg db "YOUR BIOS DOES NOT SUPPORT EXTENSIONS!!! LWD-OS CANNOT LOAD!!!", 0x0D, 0x0A, 0
+bootloader_ext_error_msg db "YOUR BIOS DOES NOT SUPPORT EXTENSIONS!!! AquaOS CANNOT LOAD!!!", 0x0D, 0x0A, 0
 bootloader_floppy_msg db "AquaOS DOES NOT SUPPORT FLOPPY DRIVES!!!", 0x0D, 0x0A, 0
 
 Disk_Address_Packet:

@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <limine.h>
+#include "font.h"
+#include "kernel_colors.h"
  
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.

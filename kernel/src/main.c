@@ -96,6 +96,18 @@ static void hcf(void) {
         asm ("hlt");
     }
 }
+
+void check_for_fb() {
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+        hcf();
+    }
+}
+
+static void plotPixels (int x, int y, uint32_t pixel, struct limine_framebuffer *fb) {
+    volatile uint32_t *fb_ptr = fb->address;
+
+    fb_ptr[x * (fb->pitch / 4) + y] = pixel;
+}
  
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -107,19 +119,13 @@ void _start(void) {
     }
  
     // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL
-     || framebuffer_request.response->framebuffer_count < 1) {
-        hcf();
-    }
+    check_for_fb();
  
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
  
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    for (size_t i = 0; i < 100; i++) {
-        volatile uint32_t *fb_ptr = framebuffer->address;
-        fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
-    }
+    plotPixels(10, 10, KRNL_WHITE, framebuffer);
  
     // We're done, just hang...
     hcf();

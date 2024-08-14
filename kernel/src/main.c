@@ -108,6 +108,37 @@ static void plotPixels (int x, int y, uint32_t pixel, struct limine_framebuffer 
 
     fb_ptr[x * (fb->pitch / 4) + y] = pixel;
 }
+
+extern char _binary_font_psf_start[];
+
+#define PIXEL uint32_t
+
+static void putchar(unsigned short int c, int cx, int cy, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
+    psf_font *font = (psf_font*)&_binary_font_psf_start;
+    int bytesperline = (font->width+7)/8;
+    int scanline = (fb->width * fb->bpp);
+
+    unsigned char *glyph = (unsigned char*)&_binary_font_psf_start + font->headersize + (c>0&&c<font->numglyph?c:0);
+
+    int offs = (cy * font->height * scanline) + (cx * (font->width + 1) * sizeof(PIXEL));
+
+    int x,y, line,mask;
+
+    for (y = 0; y < font->height; y++) {
+        line = offs;
+        mask = 1<<(font->width - 1);
+
+        for (x = 0; x < font->width; x++) {
+            *((PIXEL*) (fb + line)) = *((unsigned int*)glyph) & mask ? fg : bg;
+            
+            mask >>= 1;
+            line += sizeof(PIXEL);
+        }
+
+        glyph += bytesperline;
+        offs += scanline;
+    }
+}
  
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -126,6 +157,8 @@ void _start(void) {
  
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     plotPixels(10, 10, KRNL_WHITE, framebuffer);
+
+    putchar(4, 10, 10, KRNL_WHITE, KRNL_BLACK, framebuffer);
  
     // We're done, just hang...
     hcf();

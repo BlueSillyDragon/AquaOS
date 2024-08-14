@@ -6,7 +6,7 @@ typedef struct {
     uint16_t magic;
     uint8_t fontMode;
     uint8_t characterSize;
-} psf1_Header;
+} psf1_header;
 
 
 #define PSF_FONT_MAGIC 0x864ab572

@@ -4,6 +4,7 @@
 #include <limine.h>
 #include "krnlfont.h"
 #include "kernel_colors.h"
+#include "logo.h"
  
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -109,7 +110,10 @@ static void plotPixels (int y, int x, uint32_t pixel, struct limine_framebuffer 
     fb_ptr[x * (fb->pitch / 4) + y] = pixel;
 }
 
-void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
+int cursor_x;
+int cursor_y;
+
+void putchar (unsigned short int c, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
     uint32_t pixel;
     
     for (int cy = 0; cy < 16; cy++) {
@@ -117,15 +121,13 @@ void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, stru
             pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? fg : bg;
 
             // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
-            plotPixels((cx + (x * 8)), (cy + (y * 16)), pixel, fb);
+            plotPixels((cx + (cursor_x * 8)), (cy + (cursor_y * 16)), pixel, fb);
         }
     }
 
 }
 
-void print(char* string, int line, struct limine_framebuffer *fb) {
-
-    int x = 0;
+void print(char* string, struct limine_framebuffer *fb) {
 
     for (int i = 0;;i++) {
 
@@ -134,10 +136,38 @@ void print(char* string, int line, struct limine_framebuffer *fb) {
             break;
         }
 
-        putchar(string[i], x, line, KRNL_WHITE, KRNL_BLACK, fb);
+        // Check if it's '\n' if it is. move the cursor down.
+        if (string[i] == 0x0A) {
+            cursor_y++;
+            cursor_x = 0;
+            continue;
+        }
 
-        x++;
+        // Check if it's '\t' if it is, move the cursor foward by 6 spaces
+        if (string[i] == 0x09) {
+            cursor_x += 6;
+            continue;
+        }
+
+        putchar(string[i], KRNL_WHITE, KRNL_BLACK, fb);
+
+        cursor_x++;
     }
+}
+
+void display_logo(int line, struct limine_framebuffer *fb) {
+    print(kernel_logo_line1, fb);
+    line++;
+    print(kernel_logo_line2, fb);
+    line++;
+    print(kernel_logo_line3, fb);
+    line++;
+    print(kernel_logo_line4, fb);
+    line++;
+    print(kernel_logo_line5, fb);
+    line++;
+    print(kernel_logo_line6, fb);
+    line++;
 }
  
 // The following will be our kernel's entry point.
@@ -155,22 +185,30 @@ void _start(void) {
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
-    int x = 0;
-    int y = 3;
+    cursor_x = 0;
+    cursor_y = 0;
     int c = 0;
 
-    print("AquaOS kernel started successfully!", 0, framebuffer);
-    print("Printing font to screen...", 1, framebuffer);
+    display_logo(0, framebuffer);
+
+    cursor_y++;
+
+    print("\tCopyright BlueSillyDragon (c)2023-2024\n\n\n", framebuffer);
+
+    print("AquaOS kernel started successfully!\n", framebuffer);
+    print("Printing font to screen...\n", framebuffer);
+
+    cursor_y++;
 
     do {
-        putchar(c, x, y, KRNL_WHITE, KRNL_BLACK, framebuffer);
+        putchar(c, KRNL_WHITE, KRNL_BLACK, framebuffer);
         
-        x++;
+        cursor_x++;
         c++;
 
-        if (x > 64) {
-            y++;
-            x = 0;
+        if (cursor_x > 64) {
+            cursor_y++;
+            cursor_x = 0;
         }
 
     } while (c < 256);

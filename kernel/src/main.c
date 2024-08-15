@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <limine.h>
-#include "font.h"
+#include "krnlfont.h"
 #include "kernel_colors.h"
  
 // Set the base revision to 2, this is recommended as this is the latest
@@ -103,57 +103,23 @@ void check_for_fb() {
     }
 }
 
-static void plotPixels (int x, int y, uint32_t pixel, struct limine_framebuffer *fb) {
+static void plotPixels (int y, int x, uint32_t pixel, struct limine_framebuffer *fb) {
     volatile uint32_t *fb_ptr = fb->address;
 
     fb_ptr[x * (fb->pitch / 4) + y] = pixel;
 }
 
-/*extern char _binary_zap_ext_light16_psf_start[];
-
-#define PIXEL uint32_t
-
-static void putchar(unsigned short int c, int cx, int cy, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
-    psf_font *font = (psf_font*)&_binary_zap_ext_light16_psf_start;
-    int bytesperline = (font->width+7)/8;
-
-    unsigned char *glyph = (unsigned char*)&_binary_zap_ext_light16_psf_start + font->headersize + (c>0&&c<font->numglyph?c:0);
-
-    int offs = (cy * font->height * fb->pitch) + (cx * (font->width + 1) * sizeof(PIXEL));
-
-    int x,y, line,mask;
-
-    for (y = 0; y < font->height; y++) {
-        line = offs;
-        mask = 1<<(font->width - 1);
-
-        for (x = 0; x < font->width; x++) {
-            *((PIXEL*) (fb + line)) = *((unsigned int*)glyph) & mask ? fg : bg;
-            
-            mask >>= 1;
-            line += sizeof(PIXEL);
-        }
-
-        glyph += bytesperline;
-        offs += fb->pitch;
-    }
-}*/
-
-extern char _binary_zap_ext_light16_psf_start[];
-
 void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
-    int cx, cy;
-
-    cy = 0;
-    cx = 0;
+    uint32_t pixel;
     
-    psf_font *kernel_font = (psf_font*)&_binary_zap_ext_light16_psf_start;
+    for (int cy = 0; cy < 16; cy++) {
+        for (int cx = 0; cx < 8; cx++) {
+            pixel = (kernel_font[c + cy] >> (7 - cx)) & 1 ? fg : bg;
 
-    uint8_t *first_gylph = (uint8_t*)&_binary_zap_ext_light16_psf_start + kernel_font->headersize;
-
-    // A glyph is 8x16, cy is the y of a glyph
-    uint32_t pixel = (first_gylph[c + cy] >> (7 - cx)) & 1 ? fg : bg;
-    plotPixels(x, y, pixel, fb);
+            // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
+            plotPixels((cx + (x * 8)), (cy + (y * 16)), pixel, fb);
+        }
+    }
 
 }
  
@@ -175,7 +141,8 @@ void _start(void) {
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     //plotPixels(10, 10, KRNL_WHITE, framebuffer);
 
-    putchar(20, 1, 1, KRNL_WHITE, KRNL_BLACK, framebuffer);
+    putchar(UNKNOWN, 0, 0, KRNL_WHITE, KRNL_BLACK, framebuffer);
+    putchar(PI, 1, 0, KRNL_WHITE, KRNL_BLACK, framebuffer);
  
     // We're done, just hang...
     hcf();

@@ -114,7 +114,7 @@ void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, stru
     
     for (int cy = 0; cy < 16; cy++) {
         for (int cx = 0; cx < 8; cx++) {
-            pixel = (kernel_font[c + cy] >> (7 - cx)) & 1 ? fg : bg;
+            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? fg : bg;
 
             // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
             plotPixels((cx + (x * 8)), (cy + (y * 16)), pixel, fb);
@@ -141,8 +141,22 @@ void _start(void) {
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     //plotPixels(10, 10, KRNL_WHITE, framebuffer);
 
-    putchar(UNKNOWN, 0, 0, KRNL_WHITE, KRNL_BLACK, framebuffer);
-    putchar(PI, 1, 0, KRNL_WHITE, KRNL_BLACK, framebuffer);
+    int x = 0;
+    int y = 0;
+    int c = 0;
+
+    do {
+        putchar(c, x, y, KRNL_WHITE, KRNL_BLACK, framebuffer);
+        
+        x++;
+        c++;
+
+        if (x > 64) {
+            y++;
+            x = 0;
+        }
+
+    } while (c < 256);
  
     // We're done, just hang...
     hcf();

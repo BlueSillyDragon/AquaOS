@@ -122,6 +122,23 @@ void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, stru
     }
 
 }
+
+void print(char* string, int line, struct limine_framebuffer *fb) {
+
+    int x = 0;
+
+    for (int i = 0;;i++) {
+
+        // Check if the character is NULL, if it is, we've hit the end of the string
+        if (string[i] == 0x00) {
+            break;
+        }
+
+        putchar(string[i], x, line, KRNL_WHITE, KRNL_BLACK, fb);
+
+        x++;
+    }
+}
  
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -137,13 +154,13 @@ void _start(void) {
  
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
- 
-    // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    //plotPixels(10, 10, KRNL_WHITE, framebuffer);
 
     int x = 0;
-    int y = 0;
+    int y = 3;
     int c = 0;
+
+    print("AquaOS kernel started successfully!", 0, framebuffer);
+    print("Printing font to screen...", 1, framebuffer);
 
     do {
         putchar(c, x, y, KRNL_WHITE, KRNL_BLACK, framebuffer);

@@ -109,18 +109,17 @@ static void plotPixels (int x, int y, uint32_t pixel, struct limine_framebuffer 
     fb_ptr[x * (fb->pitch / 4) + y] = pixel;
 }
 
-extern char _binary_font_psf_start[];
+/*extern char _binary_zap_ext_light16_psf_start[];
 
 #define PIXEL uint32_t
 
 static void putchar(unsigned short int c, int cx, int cy, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
-    psf_font *font = (psf_font*)&_binary_font_psf_start;
+    psf_font *font = (psf_font*)&_binary_zap_ext_light16_psf_start;
     int bytesperline = (font->width+7)/8;
-    int scanline = (fb->width * fb->bpp);
 
-    unsigned char *glyph = (unsigned char*)&_binary_font_psf_start + font->headersize + (c>0&&c<font->numglyph?c:0);
+    unsigned char *glyph = (unsigned char*)&_binary_zap_ext_light16_psf_start + font->headersize + (c>0&&c<font->numglyph?c:0);
 
-    int offs = (cy * font->height * scanline) + (cx * (font->width + 1) * sizeof(PIXEL));
+    int offs = (cy * font->height * fb->pitch) + (cx * (font->width + 1) * sizeof(PIXEL));
 
     int x,y, line,mask;
 
@@ -136,8 +135,26 @@ static void putchar(unsigned short int c, int cx, int cy, uint32_t fg, uint32_t 
         }
 
         glyph += bytesperline;
-        offs += scanline;
+        offs += fb->pitch;
     }
+}*/
+
+extern char _binary_zap_ext_light16_psf_start[];
+
+void putchar (unsigned short int c, int x, int y, uint32_t fg, uint32_t bg, struct limine_framebuffer *fb) {
+    int cx, cy;
+
+    cy = 0;
+    cx = 0;
+    
+    psf_font *kernel_font = (psf_font*)&_binary_zap_ext_light16_psf_start;
+
+    uint8_t *first_gylph = (uint8_t*)&_binary_zap_ext_light16_psf_start + kernel_font->headersize;
+
+    // A glyph is 8x16, cy is the y of a glyph
+    uint32_t pixel = (first_gylph[c + cy] >> (7 - cx)) & 1 ? fg : bg;
+    plotPixels(x, y, pixel, fb);
+
 }
  
 // The following will be our kernel's entry point.
@@ -156,9 +173,9 @@ void _start(void) {
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
  
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    plotPixels(10, 10, KRNL_WHITE, framebuffer);
+    //plotPixels(10, 10, KRNL_WHITE, framebuffer);
 
-    putchar(4, 10, 10, KRNL_WHITE, KRNL_BLACK, framebuffer);
+    putchar(20, 1, 1, KRNL_WHITE, KRNL_BLACK, framebuffer);
  
     // We're done, just hang...
     hcf();

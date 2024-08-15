@@ -56,7 +56,9 @@ override KCFLAGS += \
     -mno-mmx \
     -mno-sse \
     -mno-sse2 \
-    -mno-red-zone
+    -mno-red-zone \
+    -g \
+    -ggdb
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
@@ -99,7 +101,7 @@ src/limine.h:
 # Link rules for the final kernel executable.
 bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 	mkdir -p "$$(dirname $@)"
-	$(KLD) $(OBJ) src/font.o $(KLDFLAGS) -o $@
+	$(KLD) $(OBJ) src/krnlfnt.o $(KLDFLAGS) -o $@
 
 # Include header dependencies.
 -include $(HEADER_DEPS)

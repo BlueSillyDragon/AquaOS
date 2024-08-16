@@ -156,17 +156,7 @@ void print(char* string, struct limine_framebuffer *fb) {
 }
 
 void display_logo(int line, struct limine_framebuffer *fb) {
-    print(kernel_logo_line1, fb);
-    line++;
-    print(kernel_logo_line2, fb);
-    line++;
-    print(kernel_logo_line3, fb);
-    line++;
-    print(kernel_logo_line4, fb);
-    line++;
-    print(kernel_logo_line5, fb);
-    line++;
-    print(kernel_logo_line6, fb);
+    print(kernel_logo, fb);
     line++;
 }
  

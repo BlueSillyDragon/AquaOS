@@ -1,9 +1,14 @@
 #include <cstdint>
 #include <cstddef>
+#include <cstdarg>
 #include <limine.h>
 #include "kernel_colors.h"
 #include "krnlfont.h"
 #include "logo.h"
+
+#define KERNEL_MAJOR_VERSION 0
+#define KERNEL_MINOR_VERSION 1
+#define KERNEL_BUILD_VERSION 62
 
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -138,6 +143,9 @@ static void plotPixels (int y, int x, uint32_t pixel, limine_framebuffer *fb) {
 int cursor_x;
 int cursor_y;
 
+std::uint32_t terminal_foreground;
+std::uint32_t terminal_background;
+
 void putchar (unsigned short int c, uint32_t fg, uint32_t bg, limine_framebuffer *fb) {
     uint32_t pixel;
     
@@ -152,7 +160,10 @@ void putchar (unsigned short int c, uint32_t fg, uint32_t bg, limine_framebuffer
 
 }
 
-void print(char* string, limine_framebuffer *fb) {
+void print(char* string, limine_framebuffer *fb, ...) {
+
+    std::va_list argp;
+    va_start(argp, string);
 
     for (int i = 0;;i++) {
 
@@ -174,10 +185,62 @@ void print(char* string, limine_framebuffer *fb) {
             continue;
         }
 
-        putchar(string[i], KRNL_WHITE, KRNL_BLACK, fb);
+        // Check the variable arguments
+        if (string[i] == '%') {
+
+            i++;
+
+            if (string[i] == '%') {
+                putchar('%', terminal_foreground, terminal_background, fb);
+                cursor_x++;
+                continue;
+            }
+
+            else if (string[i] == 'c')
+            {
+                char char_to_print = va_arg(argp, int);
+                putchar(char_to_print, terminal_foreground, terminal_background, fb);
+                cursor_x++;
+                continue;
+            }
+
+            else if (string[i] == 'd') {
+                int int_to_print = va_arg(argp, int);
+                int number[100];
+                int j = 0;
+                while(int_to_print > 0) {
+                    number[j] = (int_to_print % 10);
+                    int_to_print = (int_to_print - int_to_print % 10) / 10;
+                    j++;
+                }
+
+                j--;
+
+                for (; j>=0; j--) {
+                    putchar((number[j] + '0'), terminal_foreground, terminal_background, fb);
+                    cursor_x++;
+                }
+
+                continue;
+            }
+            
+
+            else {
+                putchar('0', terminal_foreground, terminal_background, fb);
+                cursor_x++;
+                continue;
+            }
+
+            i--;
+        }
+
+        putchar(string[i], terminal_foreground, terminal_background, fb);
 
         cursor_x++;
     }
+
+    va_end(argp);
+
 }
 
 void display_logo(limine_framebuffer *fb) {
@@ -222,6 +285,8 @@ extern "C" void kmain() {
 
     cursor_x = 0;
     cursor_y = 0;
+    terminal_foreground = KRNL_WHITE;
+    terminal_background = KRNL_BLACK;
     int c = 0;
 
     display_logo(framebuffer);
@@ -229,13 +294,26 @@ extern "C" void kmain() {
     cursor_y++;
 
     print("\tCopyright BlueSillyDragon (c)2023-2024\n\n", framebuffer);
-    print("AquaOS Kernel loaded successfully!\n", framebuffer);
+    print("\t   AquaKernel version: 0.%d.%d\n\n", framebuffer, KERNEL_MINOR_VERSION, KERNEL_BUILD_VERSION);
+
+    putchar('[', terminal_foreground, terminal_background, framebuffer);
+    cursor_x++;
+    terminal_foreground = KRNL_GREEN;
+    putchar('O', terminal_foreground, terminal_background, framebuffer);
+    cursor_x++;
+    putchar('K', terminal_foreground, terminal_background, framebuffer);
+    cursor_x++;
+    terminal_foreground = KRNL_WHITE;
+    putchar(']', terminal_foreground, terminal_background, framebuffer);
+    cursor_x++;
+
+    print(" AquaOS Kernel loaded successfully!\n", framebuffer);
     print("Printing font to screen...\n", framebuffer);
 
     cursor_y++;
 
     do {
-        putchar(c, KRNL_WHITE, KRNL_BLACK, framebuffer);
+        putchar(c, terminal_foreground, terminal_background, framebuffer);
         
         cursor_x++;
         c++;
@@ -246,6 +324,8 @@ extern "C" void kmain() {
         }
 
     } while (c < 256);
+
+    print("\nTEST %c %c %d %c done.", framebuffer, 'c', 'r', 939372, 'k');
 
     // We're done, just hang...
     hcf();

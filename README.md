@@ -24,7 +24,7 @@ $ cd AquaOS
 you'll need to install the needed tools to be able to build
 AquaOS.
 ```
-$ sudo apt install make mtools g++ xorriso qemu-system-x86
+$ sudo apt install make mtools g++ ld xorriso qemu-system-x86
 ```
 You'll also have to run the `get-deps` file
 ```

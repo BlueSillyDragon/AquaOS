@@ -1,5 +1,5 @@
 #include <efi.h>
-#include <stdint.h>
+#include <cstdint>
 
 #include "icon/logo.h"
 #include "bootinc/bootgraphics.h"
@@ -27,4 +27,16 @@
             plotPixels((x + offX), (y + offY), pixel, gop);
             x++;
         }
+    }
+
+    void screenOfDeath(EFI_GRAPHICS_OUTPUT_BLT_PIXEL* pix, EFI_STATUS sta, EFI_GRAPHICS_OUTPUT_PROTOCOL* gop) {
+
+        UINTN sourceX = (UINTN)0;
+        UINTN sourceY = (UINTN)0;
+        UINTN destX = (UINTN)0;
+        UINTN destY = (UINTN)0;
+        UINTN width = (UINTN)1680;
+        UINTN height = (UINTN)1050;
+
+        gop->Blt(gop, pix, EfiBltVideoFill, sourceX, sourceY, destX, destY, width, height, NULL);
     }

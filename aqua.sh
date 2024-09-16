@@ -1,7 +1,7 @@
 cd src/boot/efi
 make clean
 make
-cd ../../../
+cd ../../..
 make clean
 make
 make run

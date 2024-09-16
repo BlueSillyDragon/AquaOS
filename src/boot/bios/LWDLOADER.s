@@ -1,5 +1,5 @@
 [bits 16]
-[org 0x7E00]
+[org 0x0]
 
 start:
     mov ah, 0x0e
@@ -9,4 +9,4 @@ start:
 .halt:
     jmp .halt
 
-loader db "LWDLOADER", 0x0D, 0x0A, 0
+loader db "AQUALOAD", 0x0D, 0x0A, 0

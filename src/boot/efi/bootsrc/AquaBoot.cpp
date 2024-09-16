@@ -2,10 +2,15 @@
 
 extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
-    (void)ImageHandle;
+    EFI_STATUS status;
 
-    EFI_STATUS Status;
-    UINTN MapKey;
+    // Clear the screen
+    status = SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+
+    if (EFI_ERROR(status)) {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Could not clear the screen, there may be system text above\r\n");
+    }
+
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"AquaOS Bootloader has loaded successfully! Copyright (c) BlueSillyDragon 2023-2024\r\n");
     printf_("AquaOS Bootloader %u.%u\r\n",
     BootloaderMajorVersion, 
@@ -14,9 +19,9 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Setting Watchdog timer...\r\n");
 
     // Disable the watchdog timer, so the bootloader doesn't time out
-    Status = SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
+    status = SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"ERROR TRYING TO SET WATCHDOG TIMER\r\n");
         printf_("ERROR TRYING TO SET WATCHDOG TIMER\r\n");
     }
@@ -27,31 +32,31 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Fetching current time...\r\n");
 
-    EFI_TIME Time;
-    Status = SystemTable->RuntimeServices->GetTime(&Time, NULL);
-    if (EFI_ERROR(Status)) {
-        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Could not obtain date/time, Boot Time will be unavailable\r\n");
+    EFI_TIME time;
+    status = SystemTable->RuntimeServices->GetTime(&time, NULL);
+    if (EFI_ERROR(status)) {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Could not obtain date/time, Boot time will be unavailable\r\n");
     }
 
     else {
-        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Time was obtained succesfully!\r\n");
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"time was obtained succesfully!\r\n");
         printf_("Year:%u Month:%u Day:%u Hour:%u Minute:%u Second:%u Nanosecond:%u\r\n",
-        Time.Year ,
-        Time.Month, 
-        Time.Day,
-        Time.Hour,
-        Time.Minute,
-        Time.Second,
-        Time.Nanosecond);
-        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"[NOTE]: Time may be inaccurate.\r\n");
+        time.Year ,
+        time.Month, 
+        time.Day,
+        time.Hour,
+        time.Minute,
+        time.Second,
+        time.Nanosecond);
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, L"[NOTE]: time may be inaccurate.\r\n");
     }
     
 
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Attempting to locate GOP...\r\n");
-    Status = SystemTable->BootServices->LocateProtocol(&gopGuid, NULL, (void**)&gop);
-    if (EFI_ERROR(Status)) {
+    status = SystemTable->BootServices->LocateProtocol(&gopGuid, NULL, (void**)&gop);
+    if (EFI_ERROR(status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"COULD NOT LOCATE GOP!!!\r\n");
     }
 
@@ -61,12 +66,12 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Obtaining current video mode...\r\n");
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
     UINTN SizeOfInfo, numModes, nativeMode;
-    Status = gop->QueryMode(gop, gop->Mode==NULL?0:gop->Mode->Mode, &SizeOfInfo, &info);
-    if (Status == EFI_NOT_STARTED) {
-        Status = gop->SetMode(gop, 0);
+    status = gop->QueryMode(gop, gop->Mode==NULL?0:gop->Mode->Mode, &SizeOfInfo, &info);
+    if (status == EFI_NOT_STARTED) {
+        status = gop->SetMode(gop, 0);
     }
     
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Unable to get native mode!!!\r\n");
     }
 
@@ -94,8 +99,8 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Setting video mode...\r\n");
 
-    Status = gop->SetMode(gop, 21);
-    if(EFI_ERROR(Status)) {
+    status = gop->SetMode(gop, 21);
+    if(EFI_ERROR(status)) {
         printf_("Unable to set mode %03d\r\n", 21);
     } 
     
@@ -125,9 +130,9 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
     UINTN width = (UINTN)1680;
     UINTN height = (UINTN)1050;
 
-    Status = gop->Blt(gop, pixel, EfiBltVideoFill, sourceX, sourceY, destX, destY, width, height, NULL);
+    status = gop->Blt(gop, pixel, EfiBltVideoFill, sourceX, sourceY, destX, destY, width, height, NULL);
 
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(status)) {
         printf_("ERROR TRYING TO BLOCK TRANSFER TO SCREEN!!!\r\n");
     }
 
@@ -143,103 +148,86 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
     
     printf_("Obtaining the memorymap...\r\n");
 
-    UINTN MemoryMapSize;
-    EFI_MEMORY_DESCRIPTOR *MemoryMap;
-    UINTN Mapkey;
-    UINTN DescriptorSize;
-    UINT32 DescriptorVersion;
+    UINTN memoryMapSize;
+    EFI_MEMORY_DESCRIPTOR *memoryMap;
+    UINTN mapKey;
+    UINTN descriptorSize;
+    UINT32 descriptorVersion;
 
     //Get the size of the memory map
-    MemoryMapSize = 0;
-    MemoryMap = NULL;
+    memoryMapSize = 0;
+    memoryMap = NULL;
 
-    Status = SystemTable->BootServices->GetMemoryMap(
-    &MemoryMapSize, 
-    MemoryMap, 
-    &MapKey, 
-    &DescriptorSize, 
-    &DescriptorVersion);
+    status = SystemTable->BootServices->GetMemoryMap(
+    &memoryMapSize, 
+    memoryMap, 
+    &mapKey, 
+    &descriptorSize, 
+    &descriptorVersion);
 
-    if (Status == EFI_BUFFER_TOO_SMALL) {
-        printf_("Needed MemoryMapSize:%d\r\n", MemoryMapSize);
+    if (status == EFI_BUFFER_TOO_SMALL) {
+        printf_("Needed memoryMapSize:%ld\r\n", memoryMapSize);
     }
 
     else {
         printf_("ERROR TRYING TO RETRIEVE MEMORY MAP SIZE!!! BOOTLOADER CANNOT CONTINUE\r\n");
-        pixie = 0xffff00;
-        x=0;
-        y=0;
-        for (int i = 0; i < 100; i++) {
-            plotPixels(x, y, pixie, gop);
-            y++;
-        }
+
+            pixel->Red = (UINT8)255;
+            pixel->Green = (UINT8)0;
+            pixel->Blue = (UINT8)43;
+
+            screenOfDeath(pixel, status, gop);
+
         for (;;);
     }
 
-    Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, (MemoryMapSize + (2 * DescriptorSize)), (void**)&MemoryMap);
+    status = SystemTable->BootServices->AllocatePool(EfiLoaderData, (memoryMapSize + (2 * descriptorSize)), (void**)&memoryMap);
 
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(status)) {
         printf_("ERROR TRYING TO ALLOCATE MEMORY FOR MEMORY MAP!!! BOOTLOADER CAN NOT PROCEED\r\n");
-        pixie = 0xff00fe;
-        x=1;
-        y=1;
-        for (int i = 0; i < 100; i++) {
-            plotPixels(x, y, pixie, gop);
-            y++;
-        }
+
+            pixel->Red = (UINT8)10;
+            pixel->Green = (UINT8)232;
+            pixel->Blue = (UINT8)192;
+
+            screenOfDeath(pixel, status, gop);
+
         for (;;);
     }
 
-    printf_("MemoryMap:%x\r\n", &MemoryMap);
+    printf_("memoryMap:%x\r\n", &memoryMap);
 
-    MemoryMapSize += (2 * DescriptorSize);
+    memoryMapSize += (2 * descriptorSize);
 
-    Status = SystemTable->BootServices->GetMemoryMap(
-    &MemoryMapSize,
-    MemoryMap, 
-    &MapKey, 
-    &DescriptorSize, 
-    &DescriptorVersion);
+    status = SystemTable->BootServices->GetMemoryMap(
+    &memoryMapSize,
+    memoryMap, 
+    &mapKey, 
+    &descriptorSize, 
+    &descriptorVersion);
 
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR(status)) {
         printf_("ERROR WHILE TRYING TO OBTAIN MEMORY MAP, BOOTLOADER CAN NOT PROCEED!!!\r\n");
-        pixie = 0x11fe92;
-        x=2;
-        y=2;
-        for (int i = 0; i < 100; i++) {
-            plotPixels(x, y, pixie, gop);
-            y++;
-        }
-
-        switch (Status)
-        {
-        case EFI_SUCCESS:
-            printf_("EFI_SUCCESS\r\n");
-            break;
-        case EFI_BUFFER_TOO_SMALL:
-            printf_("EFI_BUFFER_TOO_SMALL\r\n");
-            break;
-        case EFI_INVALID_PARAMETER:
-            printf_("EFI_INVALID_PARAMETER\r\n");
-            break;
         
-        default:
-            break;
-        }
+            pixel->Red = (UINT8)200;
+            pixel->Green = (UINT8)132;
+            pixel->Blue = (UINT8)43;
 
-        SystemTable->BootServices->FreePool(MemoryMap);
+            screenOfDeath(pixel, status, gop);
+
+        SystemTable->BootServices->FreePool(memoryMap);
 
         for(;;);
     }
 
-    printf_("MemoryMapSize:%10u DescriptorSize:%10u DescriptorVersion:%10u\r\n",
-    MemoryMapSize,
-    DescriptorSize,
-    DescriptorVersion);
+    printf_("memoryMapSize:%10lu descriptorSize:%10lu descriptorVersion:%10u\r\n",
+    memoryMapSize,
+    descriptorSize,
+    descriptorVersion);
 
     //Get RSDP
-    UINT8 RSDPFound = 0;
-    UINTN RSDPIndex = 0;
+    UINT8 rsdpFound = 0;
+    UINTN rsdpIndex = 0;
 
     AcpiTable.Data1 = (UINT32)0xeb9d2d30;
     AcpiTable.Data2 = (UINT16)0x2d88;
@@ -265,60 +253,126 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemT
     Acpi20Table.Data4[6] = (UINT8)0x88;
     Acpi20Table.Data4[7] = (UINT8)0x81;
 
-    printf_("Number of entires in the Configuration Table:%u\r\n", SystemTable->NumberOfTableEntries);
+    printf_("Number of entires in the Configuration Table:%lu\r\n", SystemTable->NumberOfTableEntries);
+
+    // Swap out Compare function, and manually compare the ConfigTable with the AcpiTable
 
     for (UINTN i = 0; i < SystemTable->NumberOfTableEntries; i++) {
-        printf_("Table: %8u GUID: %08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x\r\n", 
-        i,
-        SystemTable->ConfigurationTable[i].VendorGuid.Data1,
-        SystemTable->ConfigurationTable[i].VendorGuid.Data2,
-        SystemTable->ConfigurationTable[i].VendorGuid.Data3,
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[0],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[1],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[2],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[3],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[4],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[5],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[6],
-        SystemTable->ConfigurationTable[i].VendorGuid.Data4[7]);
+        if (compareRSDP(&SystemTable->ConfigurationTable[i].VendorGuid, &Acpi20Table)) {
+            printf_("RSDP 2.0 found!\r\n");
+            rsdpFound = 2;
+            rsdpIndex = i;
+        }
+        printf_("X\r\n");
     }
 
     //No RSDP 2.0, search for RSDP 1.0
 
-    // Swap out Compare function, and manually compare the ConfigTable with the AcpiTable
-
-    /*for (UINTN i = 0; i < SystemTable->NumberOfTableEntries; i++) {
-        if (compare(&SystemTable->ConfigurationTable[i].VendorGuid, &Acpi20Table, 16)) {
-            printf_("RSDP 2.0 found!");
-            RSDPFound = 2;
-            RSDPIndex = i;
-        }
-    }
-
-    if (!RSDPFound) {
+    if (!rsdpFound) {
         for (UINTN i = 0; i < SystemTable->NumberOfTableEntries; i++) {
-            if (compare(&SystemTable->ConfigurationTable[i].VendorGuid, &AcpiTable, 16)) {
-                printf_("RSDP 1.0 found!");
-                RSDPFound = 1;
-                RSDPIndex = i;
+            if (compareRSDP(&SystemTable->ConfigurationTable[i].VendorGuid, &Acpi20Table)) {
+                printf_("RSDP 1.0 found!\r\n");
+                rsdpFound = 1;
+                rsdpIndex = i;
             }
         }
     }
 
-    if (!RSDPFound) {
+    if (!rsdpFound) {
         printf_("RSDP could not be found! System does not support it, Bootloader cannot proceed!");
-        pixie = 0xff381e;
-        x=3;
-        y=3;
-        for (int i = 0; i < 100; i++) {
-            plotPixels(x, y, pixie, gop);
-            y++;
-        }
-        for (;;);
-    }*/
+            pixel->Red = (UINT8)255;
+            pixel->Green = (UINT8)0;
+            pixel->Blue = (UINT8)100;
 
-    // Setup Virtual Memory so we can load the Kernel
+            screenOfDeath(pixel, status, gop);
+        for (;;);
+    }
+
+    uint64_t pml4[512];
+
+    uint64_t pdpt[512];
+
+    uintptr_t pmlAddr = (uintptr_t)&pml4;
+
+    uint64_t rbx_boot;
+
+    printf_("pmlAddr holds: 0x%x\r\n", pmlAddr);
+
+    asm volatile("push %%rbx; mov %0, %%rbx; pop %%rbx;" :: "r"(pmlAddr) : "memory");
+
+    asm volatile("mov %%rbx, %0;" :: "r"(rbx_boot));
+
+    printf_("The register 'rbx' stores: 0x%x\r\n", rbx_boot);
+
+    // PML4 bits
+    
+
+    // Set bits of the PML4
+    printf_("1st PML4: 0x%lx\r\n", pml4[0]);
+
+    // Exit Boot Services
+    printf_("mapKey: %lu\r\n", mapKey);
+
+    status = SystemTable->BootServices->ExitBootServices(ImageHandle, mapKey);
+
+    if (EFI_ERROR(status)) {
+
+        pixel->Red = (UINT8)255;
+        pixel->Green = (UINT8)255;
+        pixel->Blue = (UINT8)255;
+
+        screenOfDeath(pixel, status, gop);
+    }
+
+    statusError(status);
 
     for(;;);
 
+}
+
+void statusError(EFI_STATUS s) {
+    if (EFI_ERROR(s)) {
+        printf_("An Error Occurred!\r\n");
+        printf_("Reason: ");
+        switch (s)
+        {
+        case EFI_OUT_OF_RESOURCES:
+            printf_("Out of resources!\r\n");
+            break;
+        case EFI_INVALID_PARAMETER:
+            printf_("Invalid parameter!\r\n");
+            break;
+        case EFI_NOT_FOUND:
+            printf_("Pages could not be found!\r\n");
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+bool compareRSDP(EFI_GUID *vendGuid, EFI_GUID *rsdp) {
+    int i;
+    bool same = false;
+    if (vendGuid->Data1 != rsdp->Data1) {
+        return same;
+    }
+
+    if (vendGuid->Data2 != rsdp->Data2) {
+        return same;
+    }
+
+    if (vendGuid->Data3 != rsdp->Data3) {
+        return same;
+    }
+
+    for (i = 0; i < 8; i++) {
+        same = (vendGuid->Data4[i] == rsdp->Data4[i]);
+
+        if (!same) {
+            break;
+        }
+    }
+
+    return same;
 }

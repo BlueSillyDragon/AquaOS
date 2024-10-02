@@ -82,6 +82,10 @@ void print(CHAR16 *fmt, ...) {
 
 }
 
+void printEfiStatus(EFI_STATUS sta) {
+    print(u"hi\r\n");   
+}
+
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	(void)ImageHandle;
     EFI_STATUS status;
@@ -137,7 +141,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         print(u"Serial I/O Protocol located!\r\n");
         UINTN bufferSize;
         char buffer[] = "[Bootloader] \033[34mThis is some blue text!\033[0m\r\n";
-        bufferSize = sizeof(buffer);
+        bufferSize = sizeof(buffer) / sizeof(char);
 
         serial->Reset(serial);
         serial->Write(serial, &bufferSize, (void *)buffer);
@@ -174,13 +178,66 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         print(u"Disk I/O Protocol located!\r\n");
     }
 
-    BOOLEAN extendedVerification = 0;
+    EFI_HANDLE *handles = NULL;
+    UINTN bufferSize = 0;
+    int disk_count = 0;
 
-    status = blockIo->Reset(blockIo, extendedVerification);
+
+    status = SystemTable->BootServices->LocateHandle(                       // First we call LocateProtocol with a buffer size of 0
+        ByProtocol,                                                         // to figure out how much space we need to allocate for it
+        &blockIoGuid, 
+        NULL, 
+        &bufferSize,
+        handles);
+    
+    if (status == EFI_BUFFER_TOO_SMALL) {
+        print(u"Buffer size needed: %d\r\n", bufferSize);
+
+        SystemTable->BootServices->AllocatePool(EfiLoaderData, bufferSize, (void**)&handles);
+    }
+
+    status = SystemTable->BootServices->LocateHandle(
+        ByProtocol,
+        &blockIoGuid, 
+        NULL, 
+        &bufferSize,
+        handles);
 
     if (EFI_ERROR(status)) {
-        print(u"ERROR RESETTING BLOCK DEVICE!\r\n");
+        print(u"Could not obtain BlockIO handles!\r\n");
+
+        if (status == EFI_INVALID_PARAMETER) {
+            print(u"Invalid Paramter!\r\n");
+        }
+
+        else if (status == EFI_NOT_FOUND) {
+            print(u"No handles matching search!\r\n");
+        }
     }
+
+    for(int i = 0; (UINTN)i < bufferSize / sizeof(EFI_HANDLE); i++) {
+        status = SystemTable->BootServices->HandleProtocol(handles[i], &blockIoGuid, (void**)&blockIo);
+
+        if (blockIo->Media->LogicalPartition) {
+            print(u"Is Logical Partition.\r\n");
+            continue;
+        }
+
+        else if (!blockIo->Media->MediaPresent) {
+            print(u"Media not present.\r\n");
+            continue;
+        }
+
+        else if (EFI_ERROR(status)) {
+            print(u"Nope!\r\n");
+            continue;
+        }
+
+        print(u"Disk detected!\r\n");
+        disk_count++;
+    }
+
+    print(u"Disk count is: %d\r\n", disk_count);
 
     for(;;);
 }

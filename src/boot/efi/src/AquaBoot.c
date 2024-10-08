@@ -3,6 +3,7 @@
 #include "inc/print.h"
 #include "inc/disk_services.h"
 #include "inc/video_services.h"
+#include "inc/fs/filesystem.h"
 #include "inc/logo.h"
 
 #define AQUABOOT_MAJOR 0
@@ -14,24 +15,27 @@
 EFI_SYSTEM_TABLE *sysT = NULL;
 EFI_HANDLE imgH = NULL;
 
-void hlt() {
+void hlt()
+{
     asm volatile ( "hlt" );
 }
 
-void bpanic(void) {
-
+void bpanic(void)
+{
     sysT->ConOut->OutputString(sysT->ConOut, L"BOOTLOADER PANIC! ABORTING...");
     sysT->BootServices->Stall(10 * 1000 * 1000);
     
     sysT->BootServices->Exit(imgH, EFI_ABORTED, 0, NULL);
 }
 
-void bdebug(EFI_SERIAL_IO_PROTOCOL* ser, char* str) {
+void bdebug(EFI_SERIAL_IO_PROTOCOL* ser, char* str)
+{
     UINTN strBuf = sizeof(str);
     ser->Write(ser, &strBuf, (void *)str);
 }
 
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
+{
     EFI_STATUS status;
 
     sysT = SystemTable;
@@ -93,9 +97,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
     // Detect Disks
 
-    print(u"Detecting Disks...\r\n");
+    print(u"Initializing Disk Services...\r\n");
     
     init_disk_services();
+
+    print(u"Initializing FileSystem Services...\r\n");
+
+    init_fs_services();
 
     for(;;);
 }

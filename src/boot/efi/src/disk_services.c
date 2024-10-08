@@ -1,20 +1,25 @@
 #include "inc/globals.h"
 #include "inc/disk_services.h"
 #include "inc/print.h"
+#include "inc/fs/ext2.h"
+#include "inc/disk_services.h"
 
-void detect_disks() {
+static struct disk disks[10];
+static struct disk parts[10];
+
+int disk_count = 0;
+int part_count = 0;
+
+void detect_disks()
+{
 
     EFI_STATUS sta;
 
     EFI_GUID blockIoGuid = EFI_BLOCK_IO_PROTOCOL_GUID;
-    EFI_BLOCK_IO_PROTOCOL *blockIo;
     EFI_GUID diskIoGuid = EFI_DISK_IO_PROTOCOL_GUID;
-    EFI_DISK_IO_PROTOCOL *diskIo;
 
     EFI_HANDLE *handles = NULL;
     UINTN bufferSize = 0;
-    int dskCnt = 0;
-    int part_count = 0;
 
     sta = sysT->BootServices->LocateHandle(                       // First we call LocateProtocol with a buffer size of 0
         ByProtocol,                                                         // to figure out how much space we need to allocate for it
@@ -23,9 +28,8 @@ void detect_disks() {
         &bufferSize,
         handles);
     
-    if (sta == EFI_BUFFER_TOO_SMALL) {
-        print(u"Buffer size needed: %d\r\n", bufferSize);
-
+    if (sta == EFI_BUFFER_TOO_SMALL)
+    {
         sysT->BootServices->AllocatePool(EfiLoaderData, bufferSize, (void**)&handles);
     }
 
@@ -36,31 +40,33 @@ void detect_disks() {
         &bufferSize,
         handles);
 
-    if (EFI_ERROR(sta)) {
+    if (EFI_ERROR(sta))
+    {
         print(u"Could not obtain BlockIO handles!\r\n");
-
-        if (sta == EFI_INVALID_PARAMETER) {
-            print(u"Invalid Paramter!\r\n");
-        }
-
-        else if (sta == EFI_NOT_FOUND) {
-            print(u"No handles matching search!\r\n");
-        }
+        for (;;);
     }
 
-    static struct disk *disks;
-    static struct disk *parts;
-
-    for(int i = 0; (UINTN)i < bufferSize / sizeof(EFI_HANDLE); ++i) {
+    for(int i = 0; (UINTN)i < bufferSize / sizeof(EFI_HANDLE); ++i)
+    {
+        EFI_BLOCK_IO_PROTOCOL *blockIo = NULL;
+        EFI_DISK_IO_PROTOCOL *diskIo = NULL;
         struct disk *dsk;
         struct disk *prt;
         sta = sysT->BootServices->HandleProtocol(handles[i], &blockIoGuid, (void**)&blockIo);
 
         // Save the partition so we can probe it later
-        if (blockIo->Media->LogicalPartition) {
-            print(u"Is Logical Partition.\r\n");
+        if (blockIo->Media->LogicalPartition)
+        {
+            sta = sysT->BootServices->HandleProtocol(handles[i], &diskIoGuid, (void**)&diskIo);
+
+            if (EFI_ERROR(sta))
+            {
+                print(u"Partition %d does not support Disk I/O\r\n", part_count);
+            }
+
             prt = &parts[part_count];
             prt->bio = blockIo;
+            prt->dio = diskIo;
             prt->sectors = blockIo->Media->LastBlock + 1;
             prt->blkSize = blockIo->Media->BlockSize;
             prt->id = i;
@@ -68,33 +74,78 @@ void detect_disks() {
             continue;
         }
 
-        else if (!blockIo->Media->MediaPresent) {
-            print(u"Media not present.\r\n");
+        else if (!blockIo->Media->MediaPresent)
+        {
             continue;
         }
 
-        else if (EFI_ERROR(sta)) {
-            print(u"Nope!\r\n");
+        else if (EFI_ERROR(sta))
+        {
+            print(u"Error Obtaining Block I/O Protocol!\r\n");
             continue;
         }
 
-        else if (blockIo->Media->RemovableMedia) {
-            print(u"Is removable media.\r\n");
+        sta = sysT->BootServices->HandleProtocol(handles[i], &diskIoGuid, (void**)&diskIo);
+
+        if (EFI_ERROR(sta))
+        {
+            print(u"Error Obtaining Disk I/O Protocol!\r\n");
+            continue;
         }
 
-        dsk = &disks[dskCnt];
+        dsk = &disks[i];
         dsk->bio = blockIo;
+        dsk->dio = diskIo;
         dsk->sectors = blockIo->Media->LastBlock + 1;
         dsk->blkSize = blockIo->Media->BlockSize;
         dsk->id = i;
-
-        print(u"Disk detected!\r\n");
-        dskCnt++;
+        disk_count++;
     }
 
-    print (u"Number of disks is: %d\r\n", dskCnt);
+    print (u"Number of disks is: %d\r\n", disk_count);
 }
 
-void init_disk_services(void) {
+int get_disk_count()
+{
+    return disk_count;
+}
+
+int get_part_count()
+{
+    return part_count;
+}
+
+void read_disk(int idx, int offset, int bytes, void *buffer)
+{
+    EFI_STATUS sta;
+    struct disk *dsk;
+
+    dsk = &disks[idx];
+
+    sta = dsk->dio->ReadDisk(dsk->dio, dsk->bio->Media->MediaId, offset, bytes, &buffer);
+
+    if (EFI_ERROR(sta))
+    {
+        print(u"Could not read from disk: %d\r\n", idx);
+    }
+}
+
+void read_part(int idx, int offset, int bytes, void *buffer)
+{
+    EFI_STATUS sta;
+    struct disk *prt;
+
+    prt = &parts[idx];
+
+    sta = prt->dio->ReadDisk(prt->dio, prt->bio->Media->MediaId, offset, bytes, buffer);
+
+    if (EFI_ERROR(sta))
+    {
+        print(u"Could not read from partition: %d\r\n", idx);
+    }
+}
+
+void init_disk_services(void)
+{
     detect_disks();
 }

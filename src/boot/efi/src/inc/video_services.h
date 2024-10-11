@@ -8,8 +8,8 @@ typedef struct {
     UINT32 verticalRes;
     UINT32 pixelsPerScanline;
     UINT32 pitch;
-} AQUABOOT_FRAMEBUFFER;
+} aquaboot_framebuffer;
 
-AQUABOOT_FRAMEBUFFER initGop(EFI_SYSTEM_TABLE* ST);
-void plotPixels (int x, int y, uint32_t pixel, AQUABOOT_FRAMEBUFFER fb);
-void changeBackgroundColor(AQUABOOT_FRAMEBUFFER fb, uint32_t bgColor);
+void init_video_services(aquaboot_framebuffer *framebuffer);
+void plotPixels (int x, int y, uint32_t pixel);
+void changeBackgroundColor(uint32_t bgColor);

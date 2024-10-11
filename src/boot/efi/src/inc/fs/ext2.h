@@ -46,7 +46,7 @@ struct ext2_superblock
     uint32_t s_feature_incompat;
     uint32_t s_feature_ro_compat;
     uint64_t s_uuid[2];
-    uint64_t s_volume_name[2];
+    char s_volume_name[16];
     uint64_t s_last_mounted[8];
     uint32_t s_algo_bitmap;
     // Performance hints
@@ -68,7 +68,7 @@ struct ext2_superblock
     // Rest of the super block is reserved for future revisions
 };
 
-struct ext2_bg_desc_table 
+struct ext2_bgdt
 {
     uint32_t bg_block_bitmap;
     uint32_t bg_inode_bitmap;
@@ -78,4 +78,26 @@ struct ext2_bg_desc_table
     uint16_t bg_used_dirs_count;
     uint16_t bg_pad;    // Padding
     uint16_t bg_res[6]; // Reserved for future revisions
+};
+
+struct ext2_inode
+{
+    uint16_t i_mode;
+    uint16_t i_uid;
+    uint32_t i_size;
+    uint32_t i_atime;
+    uint32_t i_ctime;
+    uint32_t i_mtime;
+    uint32_t i_dtime;
+    uint16_t i_gid;
+    uint16_t i_links_count;
+    uint32_t i_blocks;
+    uint32_t i_flags;
+    uint32_t i_osd1;
+    uint32_t i_block[15];
+    uint32_t i_generation;
+    uint32_t i_file_acl;
+    uint32_t i_dir_acl;
+    uint32_t i_faddr;
+    uint16_t i_osd2[6];
 };

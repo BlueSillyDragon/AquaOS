@@ -1,6 +1,7 @@
 #include <efi.h>
 #include <stdarg.h>
 #include "inc/print.h"
+#include "inc/log.h"
 #include "inc/disk_services.h"
 #include "inc/video_services.h"
 #include "inc/fs/filesystem.h"
@@ -26,12 +27,6 @@ void bpanic(void)
     sysT->BootServices->Stall(10 * 1000 * 1000);
     
     sysT->BootServices->Exit(imgH, EFI_ABORTED, 0, NULL);
-}
-
-void bdebug(EFI_SERIAL_IO_PROTOCOL* ser, char* str)
-{
-    UINTN strBuf = sizeof(str);
-    ser->Write(ser, &strBuf, (void *)str);
 }
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
@@ -75,28 +70,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     //    }
     //}
 
-    // Setup Serial I/O
-    EFI_GUID serialGuid = EFI_SERIAL_IO_PROTOCOL_GUID;
-    EFI_SERIAL_IO_PROTOCOL *serial;
-
-    status = SystemTable->BootServices->LocateProtocol(&serialGuid, NULL, (void**)&serial);
-
-    if (EFI_ERROR(status)) {
-        print(u"Unable to locate Serial I/O Protocol!\r\n");
-    }
-
-    else {
-        print(u"Serial I/O Protocol located!\r\n");
-        UINTN bufferSize;
-        char buffer[] = "[Bootloader] \033[34mThis is some blue text!\033[0m\r\n";
-        bufferSize = sizeof(buffer) / sizeof(char);
-
-        serial->Reset(serial);
-        serial->Write(serial, &bufferSize, (void *)buffer);
-    }
-
-    // Detect Disks
-
     print(u"Initializing Disk Services...\r\n");
     
     init_disk_services();
@@ -104,6 +77,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     print(u"Initializing FileSystem Services...\r\n");
 
     init_fs_services();
+
+    print(u"Initializing Serial Services...\r\n");
+
+    init_serial_services();
+
+    bdebug(INFO, "[Bootloader] \033[34mThis is some blue text!\033[0m\r\n");
+
+    read_inode(12);
 
     for(;;);
 }

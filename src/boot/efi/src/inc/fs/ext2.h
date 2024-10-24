@@ -80,6 +80,16 @@ struct ext2_bgdt
     uint16_t bg_res[6]; // Reserved for future revisions
 };
 
+struct ext2_i_linux
+{
+    uint8_t l_i_frag;
+    uint8_t l_i_fsize;
+    uint16_t res1;
+    uint16_t l_i_uid_high;
+    uint16_t l_i_gid_high;
+    uint32_t res2;
+};
+
 struct ext2_inode
 {
     uint16_t i_mode;
@@ -99,5 +109,14 @@ struct ext2_inode
     uint32_t i_file_acl;
     uint32_t i_dir_acl;
     uint32_t i_faddr;
-    uint16_t i_osd2[6];
+    struct ext2_i_linux i_osd2;
+};
+
+struct ext2_dir_entry
+{
+    uint32_t inode;
+    uint16_t rec_len;
+    uint8_t name_len;
+    uint8_t file_type;      // Higher 8 bits of name_len in Revision 0
+    char name [255];
 };

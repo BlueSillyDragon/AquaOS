@@ -11,8 +11,6 @@
 #define AQUABOOT_MINOR 1
 #define AQUABOOT_PATCH 0
 
-#define AQUABOOT_BG 0x2B60DE
-
 EFI_SYSTEM_TABLE *sysT = NULL;
 EFI_HANDLE imgH = NULL;
 
@@ -31,8 +29,6 @@ void bpanic(void)
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
-    EFI_STATUS status;
-
     sysT = SystemTable;
     imgH = ImageHandle;
 
@@ -44,31 +40,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
                                             AQUABOOT_MAJOR,
                                             AQUABOOT_MINOR,
                                             AQUABOOT_PATCH);
-    print(u"Detecting Serial I/O Protocol...\r\n");
 
-    //AQUABOOT_FRAMEBUFFER framebuffer;
+    print(u"Initializing Serial Services...\r\n");
 
-    //framebuffer = initGop(SystemTable);
-
-    //changeBackgroundColor(framebuffer, AQUABOOT_BG);
-
-    // Display fancy logo =)
-
-    //int k = 0;
-
-    //for (int i = 0; i < AQUAOS_LOGO_HEIGHT; i++) {
-    //    for (int j = 0; j < AQUAOS_LOGO_WIDTH; j++) {
-
-    //        if (aquaos_logo[k] == 0x000000) {
-    //            plotPixels(i + (framebuffer.verticalRes / 4), j + (framebuffer.horizontalRes / 4), AQUABOOT_BG, framebuffer);
-    //        }
-
-    //        else {
-    //            plotPixels(i + (framebuffer.verticalRes / 4), j + (framebuffer.horizontalRes / 4), aquaos_logo[k], framebuffer);
-    //        }
-    //        k++;
-    //    }
-    //}
+    init_serial_services();
 
     print(u"Initializing Disk Services...\r\n");
     
@@ -78,13 +53,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    print(u"Initializing Serial Services...\r\n");
-
-    init_serial_services();
-
-    bdebug(INFO, "[Bootloader] \033[34mThis is some blue text!\033[0m\r\n");
-
-    read_inode(12);
+    read_inode(8193);
 
     for(;;);
 }

@@ -1,8 +1,7 @@
 #include "inc/globals.h"
 #include "inc/disk_services.h"
-#include "inc/print.h"
-#include "inc/fs/ext2.h"
 #include "inc/disk_services.h"
+#include "inc/log.h"
 
 static struct disk disks[10];
 static struct disk parts[10];
@@ -42,7 +41,7 @@ void detect_disks()
 
     if (EFI_ERROR(sta))
     {
-        print(u"Could not obtain BlockIO handles!\r\n");
+        bdebug(ERROR, "Could not obtain BlockIO handles!\r\n");
         for (;;);
     }
 
@@ -61,7 +60,7 @@ void detect_disks()
 
             if (EFI_ERROR(sta))
             {
-                print(u"Partition %d does not support Disk I/O\r\n", part_count);
+                bdebug(WARNING, "Partition %d does not support Disk I/O\r\n", part_count);
             }
 
             prt = &parts[part_count];
@@ -81,7 +80,7 @@ void detect_disks()
 
         else if (EFI_ERROR(sta))
         {
-            print(u"Error Obtaining Block I/O Protocol!\r\n");
+            bdebug(ERROR, "Error Obtaining Block I/O Protocol!\r\n");
             continue;
         }
 
@@ -89,7 +88,7 @@ void detect_disks()
 
         if (EFI_ERROR(sta))
         {
-            print(u"Error Obtaining Disk I/O Protocol!\r\n");
+            bdebug(ERROR, "Error Obtaining Disk I/O Protocol!\r\n");
             continue;
         }
 
@@ -102,7 +101,7 @@ void detect_disks()
         disk_count++;
     }
 
-    print (u"Number of disks is: %d\r\n", disk_count);
+    bdebug(INFO, "Number of disks is: %d\r\n", disk_count);
 }
 
 int get_disk_count()
@@ -126,7 +125,7 @@ void read_disk(int idx, int offset, int bytes, void *buffer)
 
     if (EFI_ERROR(sta))
     {
-        print(u"Could not read from disk: %d\r\n", idx);
+        bdebug(ERROR, "Could not read from disk: %d\r\n", idx);
     }
 }
 
@@ -141,7 +140,7 @@ void read_part(int idx, int offset, int bytes, void *buffer)
 
     if (EFI_ERROR(sta))
     {
-        print(u"Could not read from partition: %d\r\n", idx);
+        bdebug(ERROR, "Could not read from partition: %d\r\n", idx);
     }
 }
 

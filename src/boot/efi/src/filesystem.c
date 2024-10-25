@@ -3,6 +3,7 @@
 #include "inc/fs/filesystem.h"
 #include "inc/disk_services.h"
 #include "inc/log.h"
+#include "inc/print.h"
 
 uint8_t ext2_parts[10];
 uint8_t ext2_count;
@@ -29,6 +30,8 @@ void init_fs_services()
         {
             bdebug(INFO, "Part: %d is Ext2 Filesystem!\r\n", i);
 
+            bdebug(INFO, "First Data Block: %d\r\n", sb->s_first_data_block);
+
             ext2_parts[ext2_count] = i;
             ext2_count++;
         }
@@ -37,6 +40,13 @@ void init_fs_services()
         {
             bdebug(INFO, "Part: %d is not an Ext2 Partition.\r\n", i);
         }
+    }
+
+    // TODO: Check if we're booting off of installation media (e.g. USB), in which case the kernel will be located on the current media.
+    if (ext2_count < 1)
+    {
+        print(u"The AquaOS Kernel must be located on an Ext2 Partition!");
+        for(;;);
     }
 
     block_size = (1024 << sb->s_log_block_size);

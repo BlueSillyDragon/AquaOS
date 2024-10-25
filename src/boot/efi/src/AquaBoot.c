@@ -34,8 +34,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     // Clear the screen
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
-
-    print(u"AquaBoot loaded!\r\n");
+    
     print(u"AquaBoot version %d.%d.%d\r\n",
                                             AQUABOOT_MAJOR,
                                             AQUABOOT_MINOR,
@@ -53,7 +52,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    read_inode(8193);
+    read_inode(11);
 
     for(;;);
 }

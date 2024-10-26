@@ -12,6 +12,7 @@ uint8_t ext2_count;
 int block_size;
 
 uint64_t bgdt_start;
+uint64_t inode_size;
 
 int inodes_per_group;
 
@@ -19,7 +20,7 @@ struct ext2_superblock *sb;
 
 void init_fs_services()
 {
-    UINT8 buf[1024];
+    uint8_t buf[1024];
     int prt_cnt;
 
     prt_cnt = get_part_count();
@@ -61,6 +62,8 @@ void init_fs_services()
 
             inodes_per_group = sb->s_inodes_per_group;
 
+            inode_size = sb->s_inode_size;
+
             bgdt_start = block_size >= BS_2KIB ? block_size : block_size * 2;
 
             ext2_parts[ext2_count] = i;
@@ -101,13 +104,30 @@ void read_inode(uint64_t inode)
 
     bdebug(INFO, "Inode Number: %d, Block Group Number: %d, Local Inode Index: %d\r\n", inode, block_group, local_i_idx);
 
-    uint8_t buffer[32];
+    uint8_t bgdt_buf[32];
 
     struct ext2_bgdt *bgdt;
 
-    read_part(ext2_parts[0], bgdt_start + (sizeof(struct ext2_bgdt) * block_group), 32, &buffer);
+    read_part(ext2_parts[0], bgdt_start + (sizeof(struct ext2_bgdt) * block_group), 32, &bgdt_buf);
 
-    bgdt = &buffer;
+    bgdt = &bgdt_buf;
 
     bdebug(INFO, "Directories in Inode's block group: %d\r\n", bgdt->bg_used_dirs_count);
+    bdebug(INFO, "Starting block of Inode Table: %d\r\n", bgdt->bg_inode_table);
+    bdebug(INFO, "Inode size: %d\r\n", inode_size);
+
+    uint8_t ino_buf[inode_size];
+
+    read_part(ext2_parts[0], (bgdt->bg_inode_table * block_size) + (local_i_idx * inode_size), 32, &ino_buf);
+
+    struct ext2_inode *ino;
+
+    ino = &ino_buf;
+
+    if ((ino->i_mode & 0xF000) == EXT2_S_IFDIR)
+    {
+        bdebug(INFO, "Is directory!\r\n");
+    }
+
+    bdebug(INFO, "Mode is: %d\r\n", ino->i_mode);
 }

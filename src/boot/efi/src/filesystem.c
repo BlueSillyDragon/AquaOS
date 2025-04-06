@@ -84,16 +84,16 @@ void init_fs_services()
     }
 }
 
-void read_block(uint64_t block, uint8_t *buffer)
+void read_block(uint32_t block, void *buffer)
 {
-    uint8_t buf[block_size];
-
     int offset = block_size * block;
 
-    read_part(ext2_parts[0], offset, block_size, &buf);
+    read_part(ext2_parts[0], offset, block_size, buffer);
+
+    bdebug(INFO, "Finished block read!\r\n");
 }
 
-void read_inode(uint64_t inode)
+struct ext2_inode* read_inode(uint64_t inode)
 {
     bdebug(INFO, "Inodes per group: %d\r\n", inodes_per_group);
 
@@ -118,7 +118,7 @@ void read_inode(uint64_t inode)
 
     uint8_t ino_buf[inode_size];
 
-    read_part(ext2_parts[0], (bgdt->bg_inode_table * block_size) + (local_i_idx * inode_size), 32, &ino_buf);
+    read_part(ext2_parts[0], (bgdt->bg_inode_table * block_size) + (local_i_idx * inode_size), inode_size, &ino_buf);
 
     struct ext2_inode *ino;
 
@@ -129,5 +129,41 @@ void read_inode(uint64_t inode)
         bdebug(INFO, "Is directory!\r\n");
     }
 
+    bdebug(INFO, "Blocks used by inode: %d\r\n", ino->i_blocks);
+    bdebug(INFO, "Block 0 ID: %d\r\n", ino->i_block[0]);
+
     bdebug(INFO, "Mode is: %d\r\n", ino->i_mode);
+
+    return ino;
+}
+
+void read_filepath(char *filepath)
+{
+    struct ext2_inode *current_inode;
+
+    // First thing we need to do is read the root inode (which is always inode 2)
+
+    if (filepath[0] != '/')
+    {
+        bdebug(ERROR, "AquaOS filepaths must start with '/'!\r\n");
+        bdebug(INFO, "first char of filepath is: %c\r\n", filepath[0]);
+    }
+
+    current_inode = read_inode(EXT2_ROOT_INO);
+
+    if ((current_inode->i_mode & 0xF000) == EXT2_S_IFDIR)
+    {
+        bdebug(INFO, "Is directory! Continuing recursive lookup...\r\n");
+    }
+
+    uint8_t block_buf[block_size];
+
+    bdebug(INFO, "current inode block 0 id: %d\r\n", current_inode->i_block[0]);
+
+    read_block(current_inode->i_block[0], block_buf);
+
+    for(int i = 0; i < block_size; i++)
+    {
+        bdebug(NONE, "%c", block_buf[i]);
+    }
 }

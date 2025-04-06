@@ -34,6 +34,8 @@
 #define EXT2_S_IWOTH 0x0002
 #define EXT2_S_IXOTH 0x0000
 
+#define EXT2_ROOT_INO 2
+
 struct ext2_superblock
 {
     uint32_t s_inodes_count;

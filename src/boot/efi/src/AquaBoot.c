@@ -52,7 +52,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    read_inode(11);
+    //read_inode(11);
+
+    read_filepath("/AquaOS/aquakernel.elf");
 
     for(;;);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-enum DEBUG_TYPE {INFO, WARNING, ERROR};
+enum DEBUG_TYPE {INFO, WARNING, ERROR, NONE};
 
 void init_serial_services();
 

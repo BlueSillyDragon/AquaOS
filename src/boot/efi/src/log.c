@@ -45,6 +45,8 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
             bufSize = 20;
             serial->Write(serial, &bufSize, "[ \033[31mError\033[0m ] ");
             break;
+        case NONE:
+            break;
     }
 
     int int_to_print;

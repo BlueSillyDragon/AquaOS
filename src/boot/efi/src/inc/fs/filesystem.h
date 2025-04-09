@@ -10,7 +10,7 @@ void init_fs_services();
 void read_block(uint32_t block, void *buffer);
 
 // Reads the inode idx
-struct ext2_inode* read_inode(uint64_t inode);
+struct ext2_inode* read_inode(uint32_t inode);
 
 // Recursively reads inodes until it gets to the last item in the filepath
-void read_filepath(char *filepath);
+int read_filepath(char *filepath, int filepath_size);

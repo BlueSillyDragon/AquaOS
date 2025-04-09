@@ -54,7 +54,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     //read_inode(11);
 
-    read_filepath("/AquaOS/aquakernel.elf");
+    read_filepath("/Aqua64/System", sizeof("/Aqua64/System"));
 
     for(;;);
 }

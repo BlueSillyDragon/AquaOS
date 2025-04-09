@@ -1,3 +1,5 @@
+#include <efi.h>
+#include "efi/efidef.h"
 #include "inc/globals.h"
 #include "inc/fs/ext2.h"
 #include "inc/fs/filesystem.h"
@@ -17,6 +19,8 @@ uint64_t inode_size;
 int inodes_per_group;
 
 struct ext2_superblock *sb;
+
+int needed_block_id = 0;
 
 void init_fs_services()
 {
@@ -93,7 +97,7 @@ void read_block(uint32_t block, void *buffer)
     bdebug(INFO, "Finished block read!\r\n");
 }
 
-struct ext2_inode* read_inode(uint64_t inode)
+struct ext2_inode* read_inode(uint32_t inode)
 {
     bdebug(INFO, "Inodes per group: %d\r\n", inodes_per_group);
 
@@ -108,7 +112,9 @@ struct ext2_inode* read_inode(uint64_t inode)
 
     struct ext2_bgdt *bgdt;
 
-    read_part(ext2_parts[0], bgdt_start + (sizeof(struct ext2_bgdt) * block_group), 32, &bgdt_buf);
+    bdebug(INFO, "Size of BGDT: %d\r\n", sizeof(struct ext2_bgdt));
+
+    read_part(ext2_parts[0], bgdt_start + (sizeof(struct ext2_bgdt) * block_group), 32, bgdt_buf);
 
     bgdt = &bgdt_buf;
 
@@ -118,7 +124,7 @@ struct ext2_inode* read_inode(uint64_t inode)
 
     uint8_t ino_buf[inode_size];
 
-    read_part(ext2_parts[0], (bgdt->bg_inode_table * block_size) + (local_i_idx * inode_size), inode_size, &ino_buf);
+    read_part(ext2_parts[0], (bgdt->bg_inode_table * block_size) + (local_i_idx * inode_size), inode_size, ino_buf);
 
     struct ext2_inode *ino;
 
@@ -137,9 +143,19 @@ struct ext2_inode* read_inode(uint64_t inode)
     return ino;
 }
 
-void read_filepath(char *filepath)
+// TODO: Clean this function up at some point
+
+int read_filepath(char *filepath, int filepath_size)
 {
     struct ext2_inode *current_inode;
+    struct ext2_dir_entry *current_entry;
+
+    int test = 0;
+
+    int next_name_offset = 1; // Accounting for the fact that a filepath starts with /
+
+    BOOLEAN same_char = FALSE; // Used during the recursive lookup
+    BOOLEAN still_looking = TRUE;
 
     // First thing we need to do is read the root inode (which is always inode 2)
 
@@ -147,6 +163,7 @@ void read_filepath(char *filepath)
     {
         bdebug(ERROR, "AquaOS filepaths must start with '/'!\r\n");
         bdebug(INFO, "first char of filepath is: %c\r\n", filepath[0]);
+        return FALSE;
     }
 
     current_inode = read_inode(EXT2_ROOT_INO);
@@ -160,10 +177,82 @@ void read_filepath(char *filepath)
 
     bdebug(INFO, "current inode block 0 id: %d\r\n", current_inode->i_block[0]);
 
-    read_block(current_inode->i_block[0], block_buf);
+    bdebug(NONE, "\r\n");
 
-    for(int i = 0; i < block_size; i++)
+    // Start looking into directories
+
+    char next_dir_name[255];
+
+    while(still_looking)
     {
-        bdebug(NONE, "%c", block_buf[i]);
+        bdebug(INFO, "%d\r\n", current_inode->i_block[0]);
+        read_block(current_inode->i_block[0], block_buf);
+
+        bdebug(INFO, "%d\r\n", filepath_size);
+
+        for (int i = 0; i < filepath_size; i++)
+        {
+            if(filepath[i + 1] == '/')
+            {
+                next_name_offset++;
+                break;
+            }
+
+            if (next_name_offset == filepath_size)
+            {
+                still_looking = FALSE;
+                break;
+            }
+
+            next_dir_name[i] = filepath[next_name_offset];
+            next_name_offset++;
+            bdebug(NONE, "%c", next_dir_name[i]);
+        }
+
+        bdebug(NONE, "\r\n");
+
+        int name_idx = 0;
+        int name_offset = 0; // Need this to calculate the starting byte of the directory entry
+
+        for(int i = 0; i < block_size; i++)
+        {
+            if(block_buf[i] == next_dir_name[name_idx])
+            {
+                same_char = TRUE;
+                name_idx++;
+
+                if(name_idx == 256)
+                {
+                    name_offset = i;
+                    bdebug(INFO, "Name offset: %d\r\n", name_offset);
+                    break;
+                }
+            }
+
+            else
+            {
+                same_char = FALSE;
+                name_idx = 0;
+            }
+        }
+
+        if (same_char)
+        {
+            bdebug(INFO, "Found!\r\n");
+        }
+
+        else
+        {
+            bdebug(INFO, "Not found! Ending recursive lookup...\r\n");
+            return FALSE;
+        }
+
+        current_entry = &block_buf[name_offset - 263];
+
+        bdebug(INFO, "Current Entry inode: %d\r\n", current_entry->inode);
+
+        current_inode = read_inode(current_entry->inode);
+        
     }
+
 }

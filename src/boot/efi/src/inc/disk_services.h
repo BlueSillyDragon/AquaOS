@@ -1,6 +1,7 @@
 #pragma once
 
 #include "efi.h"
+#include <stdint.h>
 
 struct disk {
     uint64_t sectors;
@@ -23,4 +24,4 @@ int get_part_count();
 void read_disk(int idx, int offset, int bytes, void *buffer);
 
 // Reads from partition defined by idx, at offset, with the size in bytes, and returns the bytes read in buffer
-void read_part(int idx, int offset, int bytes, void *buffer);
+void read_part(int idx, uint64_t offset, int bytes, void *buffer);

@@ -2,6 +2,7 @@
 #include "inc/disk_services.h"
 #include "inc/disk_services.h"
 #include "inc/log.h"
+#include <stdint.h>
 
 static struct disk disks[10];
 static struct disk parts[10];
@@ -129,13 +130,14 @@ void read_disk(int idx, int offset, int bytes, void *buffer)
     }
 }
 
-void read_part(int idx, int offset, int bytes, void *buffer)
+void read_part(int idx, uint64_t offset, int bytes, void *buffer)
 {
     EFI_STATUS sta;
     struct disk *prt;
 
     prt = &parts[idx];
 
+    bdebug(INFO, "offset: %d\r\n", offset);
     sta = prt->dio->ReadDisk(prt->dio, prt->bio->Media->MediaId, offset, bytes, buffer);
 
     if (EFI_ERROR(sta))

@@ -192,9 +192,10 @@ int read_filepath(char *filepath, int filepath_size)
 
         for (int i = 0; i < filepath_size; i++)
         {
-            if(filepath[i + 1] == '/')
+            if(filepath[next_name_offset] == '/')
             {
                 next_name_offset++;
+                bdebug(INFO, "/ found, exiting...\r\n");
                 break;
             }
 
@@ -239,6 +240,10 @@ int read_filepath(char *filepath, int filepath_size)
         if (same_char)
         {
             bdebug(INFO, "Found!\r\n");
+            if (next_name_offset == filepath_size)
+            {
+                return TRUE;
+            }
         }
 
         else

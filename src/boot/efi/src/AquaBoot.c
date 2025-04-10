@@ -1,5 +1,6 @@
 #include <efi.h>
 #include <stdarg.h>
+#include "efi/efidef.h"
 #include "inc/print.h"
 #include "inc/log.h"
 #include "inc/disk_services.h"
@@ -13,6 +14,8 @@
 
 EFI_SYSTEM_TABLE *sysT = NULL;
 EFI_HANDLE imgH = NULL;
+
+BOOLEAN found_kernel = FALSE;
 
 void hlt()
 {
@@ -52,9 +55,17 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    //read_inode(11);
+    found_kernel = read_filepath("/Aqua64/System/aquakernel.elf", sizeof("/Aqua64/System/aquakernel.elf"));
 
-    read_filepath("/Aqua64/System", sizeof("/Aqua64/System"));
+    if (found_kernel)
+    {
+        print(u"AquaOS kernel found! Loading into memory...\r\n");
+    }
+
+    else
+    {
+        print(u"AquaOS kernel could not be located! Filesystem may be corrupted! Aborting...\r\n");
+    }
 
     for(;;);
 }

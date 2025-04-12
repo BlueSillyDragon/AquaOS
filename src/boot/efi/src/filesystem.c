@@ -150,8 +150,6 @@ int read_filepath(char *filepath, int filepath_size)
     struct ext2_inode *current_inode;
     struct ext2_dir_entry *current_entry;
 
-    int test = 0;
-
     int next_name_offset = 1; // Accounting for the fact that a filepath starts with /
 
     BOOLEAN same_char = FALSE; // Used during the recursive lookup
@@ -189,6 +187,13 @@ int read_filepath(char *filepath, int filepath_size)
         read_block(current_inode->i_block[0], block_buf);
 
         bdebug(INFO, "%d\r\n", filepath_size);
+
+        for(int i = 0; i < block_size; i++)
+        {
+            bdebug(NONE, "%c", block_buf[i]);
+        }
+
+        bdebug(NONE, "\r\n");
 
         for (int i = 0; i < filepath_size; i++)
         {

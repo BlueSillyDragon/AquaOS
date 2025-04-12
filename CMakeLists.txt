@@ -7,3 +7,4 @@ if (WIN32)
 endif()
 
 add_subdirectory(src/boot/efi)
+add_subdirectory(src/kernel)

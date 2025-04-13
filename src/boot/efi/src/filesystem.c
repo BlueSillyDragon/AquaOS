@@ -145,7 +145,7 @@ struct ext2_inode* read_inode(uint32_t inode)
 
 // TODO: Clean this function up at some point
 
-int read_filepath(char *filepath, int filepath_size)
+int read_filepath(char *filepath, int filepath_size, int *inode_id)
 {
     struct ext2_inode *current_inode;
     struct ext2_dir_entry *current_entry;
@@ -245,8 +245,11 @@ int read_filepath(char *filepath, int filepath_size)
         if (same_char)
         {
             bdebug(INFO, "Found!\r\n");
+            current_entry = &block_buf[name_offset - 263];
+            bdebug(INFO, "Current Entry inode: %d\r\n", current_entry->inode);
             if (next_name_offset == filepath_size)
             {
+                *inode_id = current_entry->inode;
                 return TRUE;
             }
         }
@@ -256,10 +259,6 @@ int read_filepath(char *filepath, int filepath_size)
             bdebug(INFO, "Not found! Ending recursive lookup...\r\n");
             return FALSE;
         }
-
-        current_entry = &block_buf[name_offset - 263];
-
-        bdebug(INFO, "Current Entry inode: %d\r\n", current_entry->inode);
 
         current_inode = read_inode(current_entry->inode);
         

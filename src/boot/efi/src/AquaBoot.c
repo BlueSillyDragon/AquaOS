@@ -1,12 +1,15 @@
 #include <efi.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include "efi/efidef.h"
+#include "inc/fs/ext2.h"
 #include "inc/print.h"
 #include "inc/log.h"
 #include "inc/disk_services.h"
 #include "inc/video_services.h"
 #include "inc/fs/filesystem.h"
 #include "inc/logo.h"
+#include "inc/elf.h"
 
 #define AQUABOOT_MAJOR 0
 #define AQUABOOT_MINOR 1
@@ -55,11 +58,51 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    found_kernel = read_filepath("/Aqua64/System/aquakernel.elf", sizeof("/Aqua64/System/aquakernel.elf"));
+    int kernel_inode_num = 0;
+    struct ext2_inode *kernel_ino;
+    struct elf_header *kernel_hdr;
+    struct program_header *kernel_phdr;
+    uint8_t block_buf[4096];
+
+    found_kernel = read_filepath("/Aqua64/System/aquakernel.elf", sizeof("/Aqua64/System/aquakernel.elf"), &kernel_inode_num);
 
     if (found_kernel)
     {
-        print(u"AquaOS kernel found! Loading into memory...\r\n");
+        print(u"AquaOS kernel found! Inode: %d, Loading into memory...\r\n", kernel_inode_num);
+        kernel_ino = read_inode(kernel_inode_num);
+        read_block(kernel_ino->i_block[0], block_buf);
+        kernel_hdr = &block_buf;
+
+        if (kernel_hdr->magic_number == ELF_MAGIC_NUMBER)
+        {
+            bdebug(INFO, "Is ELF!\r\n");
+        }
+
+        if (kernel_hdr->arch == 2)
+        {
+            bdebug(INFO, "64bit!\r\n");
+        }
+
+        else
+        {
+            bdebug(ERROR, "AquaOS is a 64bit system, but kernel file is 32bit, something must've went wrong, aborting...\r\n");
+        }
+
+        if (kernel_hdr->type == ELF_EXECUTABLE)
+        {
+            bdebug(INFO, "Kernel is executable!\r\n");
+        }
+
+        bdebug(INFO, "Number of program headers: %d\r\n", kernel_hdr->p_entry_num);
+        bdebug(INFO, "Program header offset: %d\r\n", kernel_hdr->p_entry_offs);
+
+        kernel_phdr = &block_buf[64];
+
+        if (kernel_phdr->seg_type == 1)
+        {
+            bdebug(INFO, "This kernel segment is loadable! Allocating memory and loading...\r\n");
+        }
+
     }
 
     else

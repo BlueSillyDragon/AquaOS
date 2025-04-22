@@ -21,6 +21,8 @@ EFI_HANDLE imgH = NULL;
 
 BOOLEAN found_kernel = FALSE;
 
+EFI_MEMORY_DESCRIPTOR *memory_map;
+
 void hlt()
 {
     asm volatile ( "hlt" );
@@ -54,6 +56,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     print(u"Initializing Disk Services...\r\n");
     
     init_disk_services();
+
+    print(u"Initializing Memory Services...\r\n");
+
+    bdebug(INFO, "Retrieving MemoryMap...\r\n");
+
+    memory_map = get_memory_map();
 
     print(u"Initializing FileSystem Services...\r\n");
 

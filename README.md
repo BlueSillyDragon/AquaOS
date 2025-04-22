@@ -6,12 +6,11 @@ AquaOS is a hobby operating system built from scratch for x86, written in C++.
 ## How to Build and Run AquaOS
 
 > [!NOTE]
-> AquaOS currently only has a basic bootloader done
+> AquaOS currently only has a basic bootloader done.
 > So no kernel yet, sorry
 
 > [!WARNING]
-> I have only built AquaOS on Linux, I don't know if it will build on Windows
-> (What're doing trying to do OSDev stuff on Windows anyways?)
+> AquaOS will build on Windows (using WSL), however I can't guarantee this will always work (Why're you using Windows for OSDev anyways?)
 
 ### Step 1: Clone repository
 
@@ -27,7 +26,7 @@ You'll need to install the needed tools to be able to build AquaOS if you don't 
 ```
 $ sudo apt install cmake clang ninja-build lld llvm
 ```
-Also install qemu and ovmf for running AquaOS, you can skip this iof you're going to use a different VM though (eg. VirtualBox)
+Also install qemu and ovmf for running AquaOS, you can skip this if you're going to use a different VM though (eg. VirtualBox)
 > [!WARNING]
 > I can't guarantee that AquaOS will run on VirtualBox, but feel free to try
 
@@ -82,7 +81,7 @@ Don't panic, for some reason the spacing on the last command is messed up, you c
 First open build.ninja in whatever code editor you use. Then go to line 172.
 Go near the end and delete everything after "seek=" and replace it with this "$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096)) 2>/dev/null" should look like this after you're done.
 ```
-COMMAND = cd /home/bluesillydragon/Desktop/AquaOS/build/src/boot/efi && llvm-objcopy -O binary AquaBoot AquaBoot.efi && dd if=/dev/zero of=AquaBoot.efi bs=4096 count=0 seek=$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096)) 2>/dev/null
+...seek=$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096)) 2>/dev/null
 ```
 
 Now save and run ninja again, if everything goes well, you should see something like this.

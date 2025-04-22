@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "efi/efidef.h"
 #include "inc/fs/ext2.h"
+#include "inc/memory_services.h"
 #include "inc/print.h"
 #include "inc/log.h"
 #include "inc/disk_services.h"

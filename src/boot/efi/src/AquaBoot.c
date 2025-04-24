@@ -23,6 +23,16 @@ BOOLEAN found_kernel = FALSE;
 
 EFI_MEMORY_DESCRIPTOR *memory_map;
 
+void *memcpy(void *dest, const void *src, size_t n) {
+    asm volatile(
+        "rep movsb"
+        : "=D"(dest), "=S"(src), "=c"(n)
+        : "D"(dest), "S"(src), "c"(n)
+        : "memory"
+    );
+    return dest;
+}
+
 void hlt()
 {
     asm volatile ( "hlt" );
@@ -111,7 +121,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         {
             bdebug(INFO, "This kernel segment is loadable! Allocating memory and loading...\r\n");
         }
-
+        char *kernel_buffer;
+        uefi_allocate_pool(kernel_phdr->p_filesz, &kernel_buffer);
+        print(u"Allocated Memory for kernel! Loading...\r\n");
     }
 
     else

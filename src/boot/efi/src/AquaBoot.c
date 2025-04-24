@@ -103,7 +103,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         }
 
         bdebug(INFO, "Number of program headers: %d\r\n", kernel_hdr->p_entry_num);
-        bdebug(INFO, "Program header offset: %d\r\n", kernel_hdr->p_entry_offs);
+        bdebug(INFO, "Program header offset: 0x%x\r\n", kernel_hdr->p_entry_offs);
 
         kernel_phdr = &block_buf[64];
 

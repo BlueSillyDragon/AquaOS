@@ -2,6 +2,7 @@
 #include "inc/print.h"
 #include "inc/log.h"
 #include <stdarg.h>
+#include <stdint.h>
 
 EFI_SERIAL_IO_PROTOCOL *serial;
 
@@ -49,7 +50,7 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
             break;
     }
 
-    int int_to_print;
+    uint64_t int_to_print;
     int number[100];
     int j;
     char c;
@@ -80,6 +81,32 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
 
                     for (; j>=0; j--) {
                         c = number[j] + '0';
+                        ser_putchar(c);
+                    }
+
+                    continue;
+                case 'x':
+                    int_to_print = va_arg(args, int);
+                    j = 0;
+                    do {
+                        number[j] = (int_to_print % 16);
+                        int_to_print = (int_to_print - int_to_print % 16) / 16;
+                        j++;
+                    }
+                    while(int_to_print > 0);
+
+                    j--;
+
+                    for (; j>=0; j--) {
+                        if (number[j] > 0x9)
+                        {
+                            c = number[j] + ('0' + 7);
+                        }
+
+                        else
+                        {
+                            c = number[j] + '0';
+                        }
                         ser_putchar(c);
                     }
 

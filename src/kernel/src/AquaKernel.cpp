@@ -1,4 +1,4 @@
 extern "C" int kernel_main ()
 {
-    return 12;
+    return 123;
 }

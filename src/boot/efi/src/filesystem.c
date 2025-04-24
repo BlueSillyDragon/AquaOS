@@ -138,7 +138,7 @@ struct ext2_inode* read_inode(uint32_t inode)
     bdebug(INFO, "Blocks used by inode: %d\r\n", ino->i_blocks);
     bdebug(INFO, "Block 0 ID: %d\r\n", ino->i_block[0]);
 
-    bdebug(INFO, "Mode is: %d\r\n", ino->i_mode);
+    bdebug(INFO, "Mode is: 0x%x\r\n", ino->i_mode);
 
     return ino;
 }

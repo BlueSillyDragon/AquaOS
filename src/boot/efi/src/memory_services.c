@@ -11,11 +11,11 @@ EFI_MEMORY_DESCRIPTOR* get_memory_map()
 {
     EFI_STATUS status;
 
-    UINTN memory_map_size;
+    UINTN memory_map_size = 0;
     EFI_MEMORY_DESCRIPTOR *memory_map;
-    UINTN *map_key = NULL;
-    UINTN *descriptor_size = NULL;
-    UINT32 *descriptor_version = NULL;
+    UINTN *map_key;
+    UINTN *descriptor_size;
+    UINT32 *descriptor_version;
 
     // Get the size of the amount of memory we need to Allocate memory for the MemoryMap
     status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, map_key, descriptor_size, descriptor_version);
@@ -37,11 +37,13 @@ EFI_MEMORY_DESCRIPTOR* get_memory_map()
     if (status != EFI_SUCCESS)
     {
         bdebug(ERROR, "Something went wrong when retrieving MemoryMap!\r\n");
+        bdebug(INFO, "MemoryMapSize: %d | MemoryMap Address: 0x%x\r\n", memory_map_size, memory_map);
     }
 
     else
     {
         bdebug(INFO, "MemoryMap was retrieved!\r\n");
+        bdebug(INFO, "MemoryMapSize: %d | MemoryMap Address: 0x%x\r\n", memory_map_size, memory_map);
     }
     return memory_map;
 }

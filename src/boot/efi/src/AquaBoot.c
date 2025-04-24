@@ -105,6 +105,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         else
         {
             bdebug(ERROR, "AquaOS is a 64bit system, but kernel file is 32bit, something must've went wrong, aborting...\r\n");
+            bpanic();
         }
 
         if (kernel_hdr->type == ELF_EXECUTABLE)
@@ -122,13 +123,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
             bdebug(INFO, "This kernel segment is loadable! Allocating memory and loading...\r\n");
         }
         char *kernel_buffer;
-        uefi_allocate_pool(kernel_phdr->p_filesz, &kernel_buffer);
+        uefi_allocate_pool(kernel_phdr->p_memsz, &kernel_buffer);
         print(u"Allocated Memory for kernel! Loading...\r\n");
+        memcpy(kernel_buffer, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
     }
 
     else
     {
         print(u"AquaOS kernel could not be located! Filesystem may be corrupted! Aborting...\r\n");
+        bpanic();
     }
 
     for(;;);

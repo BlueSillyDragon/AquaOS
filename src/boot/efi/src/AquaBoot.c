@@ -2,15 +2,18 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include "efi/efidef.h"
+#include "efi/efierr.h"
 #include "inc/fs/ext2.h"
 #include "inc/memory_services.h"
 #include "inc/print.h"
 #include "inc/log.h"
 #include "inc/disk_services.h"
+#include "inc/acpi.h"
 #include "inc/video_services.h"
 #include "inc/fs/filesystem.h"
 #include "inc/logo.h"
 #include "inc/elf.h"
+#include "inc/virtual_memory.h"
 
 #define AQUABOOT_MAJOR 0
 #define AQUABOOT_MINOR 1
@@ -69,10 +72,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     print(u"Initializing Memory Services...\r\n");
 
-    bdebug(INFO, "Retrieving MemoryMap...\r\n");
-
-    memory_map = get_memory_map();
-
     print(u"Initializing FileSystem Services...\r\n");
 
     init_fs_services();
@@ -122,10 +121,20 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         {
             bdebug(INFO, "This kernel segment is loadable! Allocating memory and loading...\r\n");
         }
-        char *kernel_buffer;
-        uefi_allocate_pool(kernel_phdr->p_memsz, &kernel_buffer);
+        uint64_t kernel_addr;
+        uefi_allocate_pages(1, &kernel_addr);
+        bdebug(INFO, "Kernel located at 0x%x\r\n", (uint64_t *)kernel_addr);
         print(u"Allocated Memory for kernel! Loading...\r\n");
-        memcpy(kernel_buffer, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
+        memcpy((uint64_t *)kernel_addr, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
+        uint64_t test = 0xffffffff80000000;
+
+        print(u"Setting Up Page Tables...\r\n");
+
+        pagemap_t pagemap;
+        pagemap = new_pagemap();
+
+        map_page(pagemap, test, kernel_addr, 0x1);
+        virt_to_phys(pagemap, 0xffffffff80000000);
     }
 
     else

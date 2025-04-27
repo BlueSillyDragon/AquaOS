@@ -1,5 +1,12 @@
-set(SOURCES "src/AquaBoot.c" "src/video_services.c" "src/disk_services.c" "src/print.c" "src/filesystem.c" "src/log.c" "src/memory_services.c")
-
+set(SOURCES
+"src/AquaBoot.c"
+"src/video_services.c"
+"src/disk_services.c"
+"src/print.c" "src/filesystem.c"
+"src/log.c"
+"src/memory_services.c"
+"src/virtual_memory.c"
+"src/acpi.c")
 add_executable(AquaBoot ${SOURCES})
 
 target_compile_options(AquaBoot

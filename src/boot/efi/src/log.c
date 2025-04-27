@@ -36,7 +36,7 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
     {
         case INFO:
             bufSize = 19;
-            serial->Write(serial, &bufSize, "[ \033[32mInfo\033[0m ] ");
+            serial->Write(serial, &bufSize, "[ \033[94mBoot\033[0m ] ");
             break;
         case WARNING:
             bufSize = 22;
@@ -51,7 +51,7 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
     }
 
     uint64_t int_to_print;
-    int number[100];
+    uint64_t number[256];
     int j;
     char c;
     va_list args;
@@ -68,7 +68,7 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
                     ser_putchar(c);
                     break;
                 case 'd':
-                    int_to_print = va_arg(args, int);
+                    int_to_print = va_arg(args, uint64_t);
                     j = 0;
                     do {
                         number[j] = (int_to_print % 10);
@@ -86,7 +86,7 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
 
                     continue;
                 case 'x':
-                    int_to_print = va_arg(args, int);
+                    int_to_print = va_arg(args, uint64_t);
                     j = 0;
                     do {
                         number[j] = (int_to_print % 16);

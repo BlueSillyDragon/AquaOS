@@ -5,6 +5,7 @@
 #include "efi/x86_64/efibind.h"
 #include "inc/globals.h"
 #include "inc/log.h"
+#include "inc/print.h"
 #include "inc/memory_services.h"
 
 EFI_MEMORY_DESCRIPTOR* get_memory_map()
@@ -53,13 +54,31 @@ void uefi_allocate_pool(UINTN size, void **buffer)
     EFI_STATUS status;
     status = sysT->BootServices->AllocatePool(EfiLoaderData, size, buffer);
 
-    if (status == EFI_SUCCESS)
+    if(status != EFI_SUCCESS)
     {
-        bdebug(INFO, "Successfully allocated %d bytes of memory!\r\n", size);
-    }
+        bdebug(ERROR, "Failed to allocate %d bytes of memory!\r\n", size);
+    } else bdebug(INFO, "Allocated %d bytes! Starting address: 0x%x\r\n", size, buffer);
+}
 
-    else
+void uefi_allocate_pages(UINTN pages, uint64_t *memory)
+{
+    EFI_STATUS status;
+    status = sysT->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, pages, memory);
+
+    if(status != EFI_SUCCESS)
     {
-        bdebug(ERROR, "Failed to allocate memory!\r\n");
-    }
+        bdebug(ERROR, "Failed to allocate %d pages!\r\n", pages);
+        switch (status)
+        {
+            case EFI_OUT_OF_RESOURCES:
+                bdebug(ERROR, "Out of resources!\r\n");
+                break;
+            case EFI_INVALID_PARAMETER:
+                bdebug(ERROR, "Invalid Parameter!\r\n");
+                break;
+            case EFI_NOT_FOUND:
+                bdebug(ERROR, "Page not found!\r\n");
+                break;
+        }
+    } else bdebug(INFO, "Allocated %d pages! Starting address: 0x%x\r\n", pages, *memory);
 }

@@ -1,4 +1,4 @@
-extern "C" int kernel_main ()
+extern "C" void kernel_main ()
 {
-    return 123;
+    for(;;);
 }

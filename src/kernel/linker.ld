@@ -1,29 +1,50 @@
 OUTPUT_FORMAT(elf64-x86-64)
 
 ENTRY(kernel_main)
-
 SECTIONS
 {
     . = 0xffffffff80000000;
 
-     .text : ALIGN(CONSTANT(MAXPAGESIZE))
+    .text : AT(ADDR(.text) - 0xffffffff80000000)
     {
+        _code = .;
         *(.text)
+        *(.rodata*)
+        . = ALIGN(4096);
     }
 
-    .rodata : ALIGN(CONSTANT(MAXPAGESIZE))
-    {
-        *(.rodata)
-    }
-
-    .data : ALIGN(CONSTANT(MAXPAGESIZE))
-    {
+   .data : AT(ADDR(.data) - 0xffffffff80000000)
+   {
+        _data = .;
         *(.data)
-    }
+        . = ALIGN(4096);
+   }
 
-    .bss : ALIGN(CONSTANT(MAXPAGESIZE))
-    {
+   .eh_frame : AT(ADDR(.eh_frame) - 0xffffffff80000000)
+   {
+       _ehframe = .;
+       *(.eh_frame)
+        . = ALIGN(4096);
+   }
+
+   .bss : AT(ADDR(.bss) - 0xffffffff80000000)
+   {
+       _bss = .;
+       *(.bss)
+
+       /*
+        * You usually need to include generated COMMON symbols
+        * under kernel BSS section or use gcc's -fno-common
+        */
+
         *(COMMON)
-        *(.bss)
-    }
+       . = ALIGN(4096);
+   }
+
+   _end = .;
+
+   /DISCARD/ :
+   {
+        *(.comment)
+   }
 }

@@ -8,18 +8,18 @@
 #include "inc/print.h"
 #include "inc/memory_services.h"
 
-EFI_MEMORY_DESCRIPTOR* get_memory_map()
+EFI_MEMORY_DESCRIPTOR* get_memory_map(uint64_t mapk)
 {
     EFI_STATUS status;
 
     UINTN memory_map_size = 0;
     EFI_MEMORY_DESCRIPTOR *memory_map;
-    UINTN *map_key;
+    UINTN map_key;
     UINTN *descriptor_size;
     UINT32 *descriptor_version;
 
     // Get the size of the amount of memory we need to Allocate memory for the MemoryMap
-    status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, map_key, descriptor_size, descriptor_version);
+    status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, &map_key, descriptor_size, descriptor_version);
 
     if (status == EFI_BUFFER_TOO_SMALL)     // If status is not EFI_BUFFER_TOO_SMALL something has gone wrong
     {
@@ -34,7 +34,7 @@ EFI_MEMORY_DESCRIPTOR* get_memory_map()
     }
 
     // Get the MemoryMap
-    status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, map_key, descriptor_size, descriptor_version);
+    status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, &map_key, descriptor_size, descriptor_version);
     if (status != EFI_SUCCESS)
     {
         bdebug(ERROR, "Something went wrong when retrieving MemoryMap!\r\n");
@@ -46,6 +46,7 @@ EFI_MEMORY_DESCRIPTOR* get_memory_map()
         bdebug(INFO, "MemoryMap was retrieved!\r\n");
         bdebug(INFO, "MemoryMapSize: %d | MemoryMap Address: 0x%x\r\n", memory_map_size, memory_map);
     }
+    mapk = map_key;
     return memory_map;
 }
 

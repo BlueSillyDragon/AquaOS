@@ -53,5 +53,6 @@ typedef struct {
 pagemap_t new_pagemap();
 
 void map_page(pagemap_t pagemap, uint64_t virt_address, uint64_t phys_address, uint64_t flags);
+void map_pages(pagemap_t pagemap, uint64_t virt_address, uint64_t phys_address, uint64_t flags, uint64_t count);
 
 uint64_t virt_to_phys(pagemap_t pagemap, uint64_t virt_address);

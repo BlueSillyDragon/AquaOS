@@ -1,8 +1,7 @@
 #include <efi.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include "efi/efidef.h"
-#include "efi/efierr.h"
+#include "inc/aquaboot.h"
 #include "inc/fs/ext2.h"
 #include "inc/memory_services.h"
 #include "inc/print.h"
@@ -19,12 +18,19 @@
 #define AQUABOOT_MINOR 1
 #define AQUABOOT_PATCH 0
 
+#define PT_ADDR_MASK ((uint64_t)0x0000fffffffff000)
+#define pte_addr(pte) ((pte) & PT_ADDR_MASK)
+
 EFI_SYSTEM_TABLE *sysT = NULL;
 EFI_HANDLE imgH = NULL;
+
+EFI_STATUS status;
 
 BOOLEAN found_kernel = FALSE;
 
 EFI_MEMORY_DESCRIPTOR *memory_map;
+
+uint64_t map_key;
 
 void *memcpy(void *dest, const void *src, size_t n) {
     asm volatile(
@@ -113,7 +119,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         }
 
         bdebug(INFO, "Number of program headers: %d\r\n", kernel_hdr->p_entry_num);
-        bdebug(INFO, "Program header offset: 0x%x\r\n", kernel_hdr->p_entry_offs);
+        bdebug(INFO, "Kernel entry offset: 0x%x\r\n", kernel_hdr->p_entry_offs);
 
         kernel_phdr = &block_buf[64];
 
@@ -125,16 +131,53 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         uefi_allocate_pages(1, &kernel_addr);
         bdebug(INFO, "Kernel located at 0x%x\r\n", (uint64_t *)kernel_addr);
         print(u"Allocated Memory for kernel! Loading...\r\n");
-        memcpy((uint64_t *)kernel_addr, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
-        uint64_t test = 0xffffffff80000000;
 
-        print(u"Setting Up Page Tables...\r\n");
+        kernel_ino = read_inode(kernel_inode_num);
+        read_block(kernel_ino->i_block[1], block_buf);
+        memcpy((uint64_t *)kernel_addr, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
+
+        bdebug(NONE, "\r\n");
+
+        aquaboot_framebuffer *framebuffer;
+        init_video_services(framebuffer);
+
+        changeBackgroundColor(0x2b60de);
+        display_logo();
+
+        bdebug(INFO, "Setting up page tables...\r\n");
 
         pagemap_t pagemap;
         pagemap = new_pagemap();
 
-        map_page(pagemap, test, kernel_addr, 0x1);
-        virt_to_phys(pagemap, 0xffffffff80000000);
+        bdebug(INFO, "Identity Mapping...\r\n");
+
+        map_page(pagemap, 0xffffffff80000000, kernel_addr, 0x7);
+        map_pages(pagemap, 0x70000000, 0x70000000, 0x7, 0x10000000);
+
+        changeBackgroundColor(0x000000);
+
+        get_memory_map(map_key);
+
+        SystemTable->BootServices->ExitBootServices(ImageHandle, map_key);
+
+        if (EFI_ERROR(status))
+        {
+            bdebug(ERROR, "Problem occured exiting boot services! Aborting...\r\n");
+            bpanic();
+        } else {bdebug(INFO, "Successfully exited boot services!\r\n");}
+
+        extern void disablePaging(uint64_t pml4);
+        extern void enablePaging(void);
+
+        disablePaging(pagemap.top_level);
+        enablePaging();
+
+        void (*kernel_main)(void) = (void(*)(void)) kernel_hdr->p_entry_offs + 10;
+
+        kernel_main();
+
+        asm volatile("mov $1, %rax");
+        for(;;);
     }
 
     else
@@ -143,5 +186,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         bpanic();
     }
 
-    for(;;);
+    // Shouldn't ever reach here, but if we do, panic
+    bpanic();
 }

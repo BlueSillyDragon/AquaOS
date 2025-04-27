@@ -1,3 +1,4 @@
+#include "inc/aquaboot.h"
 #include "inc/globals.h"
 #include "inc/print.h"
 #include "inc/video_services.h"

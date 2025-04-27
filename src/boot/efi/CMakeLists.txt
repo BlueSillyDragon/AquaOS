@@ -6,8 +6,11 @@ set(SOURCES
 "src/log.c"
 "src/memory_services.c"
 "src/virtual_memory.c"
-"src/acpi.c")
+"src/acpi.c"
+"src/paging.S")
 add_executable(AquaBoot ${SOURCES})
+
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -masm=intel")
 
 target_compile_options(AquaBoot
 PRIVATE -g

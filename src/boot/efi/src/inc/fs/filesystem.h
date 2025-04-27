@@ -7,7 +7,7 @@
 void init_fs_services();
 
 // Reads 
-void read_block(uint32_t block, void *buffer);
+void read_block(uint64_t block, void *buffer);
 
 // Reads the inode idx
 struct ext2_inode* read_inode(uint32_t inode);

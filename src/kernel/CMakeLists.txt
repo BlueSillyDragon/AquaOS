@@ -13,6 +13,7 @@ PRIVATE -fno-stack-check
 PRIVATE -fno-PIC
 PRIVATE -ffunction-sections
 PRIVATE -fdata-sections
+PRIVATE -isystem ../src/boot/efi/freestanding-headers
 PRIVATE -m64
 PRIVATE -march=x86-64
 PRIVATE -mno-80387

@@ -1,50 +1,56 @@
 OUTPUT_FORMAT(elf64-x86-64)
 
 ENTRY(kernel_main)
+
+PHDRS
+{
+    text PT_LOAD;
+    rodata PT_LOAD;
+    data PT_LOAD;
+}
+
 SECTIONS
 {
     . = 0xffffffff80000000;
 
-    .text : AT(ADDR(.text) - 0xffffffff80000000)
-    {
-        _code = .;
-        *(.text)
-        *(.rodata*)
-        . = ALIGN(4096);
-    }
+    .text : ALIGN(CONSTANT(MAXPAGESIZE)){
+        *(.text .text.*)
+    } :text
 
-   .data : AT(ADDR(.data) - 0xffffffff80000000)
-   {
-        _data = .;
-        *(.data)
-        . = ALIGN(4096);
-   }
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
 
-   .eh_frame : AT(ADDR(.eh_frame) - 0xffffffff80000000)
-   {
-       _ehframe = .;
-       *(.eh_frame)
-        . = ALIGN(4096);
-   }
+    .rodata : {
+        *(.rodata .rodata.*)
+    } :rodata
 
-   .bss : AT(ADDR(.bss) - 0xffffffff80000000)
-   {
-       _bss = .;
-       *(.bss)
+    /* C++ is a language that allows for global constructors. In order to obtain the */
+    /* address of the ".init_array" section we need to define a symbol for it. */
+    .init_array : {
+        __init_array = .;
+        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+        KEEP(*(.init_array .ctors))
+        __init_array_end = .;
+    } :rodata
 
-       /*
-        * You usually need to include generated COMMON symbols
-        * under kernel BSS section or use gcc's -fno-common
-        */
+    /* Move to the next memory page for .data */
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
 
+    .data : {
+        *(.data .data.*)
+    } :data
+
+    /* NOTE: .bss needs to be the last thing mapped to :data, otherwise lots of */
+    /* unnecessary zeros will be written to the binary. */
+    /* If you need, for example, .init_array and .fini_array, those should be placed */
+    /* above this. */
+    .bss : {
+        *(.bss .bss.*)
         *(COMMON)
-       . = ALIGN(4096);
-   }
+    } :data
 
-   _end = .;
-
-   /DISCARD/ :
-   {
-        *(.comment)
-   }
+    /* Discard .note.* and .eh_frame* since they may cause issues on some hosts. */
+    /DISCARD/ : {
+        *(.eh_frame*)
+        *(.note .note.*)
+    }
 }

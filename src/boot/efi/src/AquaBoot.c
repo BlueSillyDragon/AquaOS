@@ -60,6 +60,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     sysT = SystemTable;
     imgH = ImageHandle;
 
+    aquaboot_info *boot_info;
+    boot_info->aquaboot_major = AQUABOOT_MAJOR;
+    boot_info->aquaboot_minor = AQUABOOT_MINOR;
+    boot_info->aquaboot_patch = AQUABOOT_PATCH;
+
     // Clear the screen
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
     
@@ -82,6 +87,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
+    // Extra feature: Check if Windows is installed (check EFI/Microsoft/* for bootmgr.efi), and allow user to boot to it if they want
+
     int kernel_inode_num = 0;
     struct ext2_inode *kernel_ino;
     struct elf_header *kernel_hdr;
@@ -93,50 +100,17 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     if (found_kernel)
     {
         print(u"AquaOS kernel found! Inode: %d, Loading into memory...\r\n", kernel_inode_num);
-        kernel_ino = read_inode(kernel_inode_num);
-        read_block(kernel_ino->i_block[0], block_buf);
-        kernel_hdr = &block_buf;
 
-        if (kernel_hdr->magic_number == ELF_MAGIC_NUMBER)
+        if(!is_elf(kernel_inode_num))
         {
-            bdebug(INFO, "Is ELF!\r\n");
+            print(u"Kernel's ELF header could not be validated! May be corrupted. Aborting...\r\n");
         }
 
-        if (kernel_hdr->arch == 2)
-        {
-            bdebug(INFO, "64bit!\r\n");
-        }
+        uint64_t kernel_paddr = load_elf(kernel_inode_num);
+        uint64_t kernel_vaddr = 0xffffffff80000000;
+        bdebug(INFO, "Kernel loaded at 0x%x\r\n", kernel_paddr);
 
-        else
-        {
-            bdebug(ERROR, "AquaOS is a 64bit system, but kernel file is 32bit, something must've went wrong, aborting...\r\n");
-            bpanic();
-        }
-
-        if (kernel_hdr->type == ELF_EXECUTABLE)
-        {
-            bdebug(INFO, "Kernel is executable!\r\n");
-        }
-
-        bdebug(INFO, "Number of program headers: %d\r\n", kernel_hdr->p_entry_num);
-        bdebug(INFO, "Kernel entry offset: 0x%x\r\n", kernel_hdr->p_entry_offs);
-
-        kernel_phdr = &block_buf[64];
-
-        if (kernel_phdr->seg_type == 1)
-        {
-            bdebug(INFO, "This kernel segment is loadable! Allocating memory and loading...\r\n");
-        }
-        uint64_t kernel_addr;
-        uefi_allocate_pages(1, &kernel_addr);
-        bdebug(INFO, "Kernel located at 0x%x\r\n", (uint64_t *)kernel_addr);
         print(u"Allocated Memory for kernel! Loading...\r\n");
-
-        kernel_ino = read_inode(kernel_inode_num);
-        read_block(kernel_ino->i_block[1], block_buf);
-        memcpy((uint64_t *)kernel_addr, &block_buf[kernel_phdr->offset], kernel_phdr->p_filesz);
-
-        bdebug(NONE, "\r\n");
 
         aquaboot_framebuffer *framebuffer;
         init_video_services(framebuffer);
@@ -151,10 +125,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         bdebug(INFO, "Identity Mapping...\r\n");
 
-        map_page(pagemap, 0xffffffff80000000, kernel_addr, 0x7);
         map_pages(pagemap, 0x70000000, 0x70000000, 0x7, 0x10000000);
+        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x7, 0x6000);
 
         changeBackgroundColor(0x000000);
+
+        boot_info->framebuffer = framebuffer;
 
         get_memory_map(map_key);
 
@@ -166,19 +142,19 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
             bpanic();
         } else {bdebug(INFO, "Successfully exited boot services!\r\n");}
 
-        extern void disablePaging(uint64_t pml4);
-        extern void enablePaging(void);
+        extern void loadPageTables(uint64_t pml4);
 
-        disablePaging(pagemap.top_level);
-        enablePaging();
+        loadPageTables(pagemap.top_level);
 
-        void (*kernel_main)(void) = (void(*)(void)) kernel_hdr->p_entry_offs + 10;
+        void (*kernel_main)(aquaboot_info *boot_info) = (void(*)(aquaboot_info *boot_info)) kernel_vaddr;
 
-        kernel_main();
+        kernel_main(boot_info);
 
-        asm volatile("mov $1, %rax");
-        for(;;);
+        asm volatile("mov $1, %eax");   // For debugging purposes, tells us if we didn't jump to kernel entry
+        for(;;);    // We can't call bpanic anymore, so just halt the system
     }
+
+    // TODO: Check Boot Medium (eg. USB) for 
 
     else
     {

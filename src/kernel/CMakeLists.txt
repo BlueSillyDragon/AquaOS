@@ -4,6 +4,7 @@ add_executable(aquakernel.elf ${SOURCES})
 
 target_compile_options(aquakernel.elf
 PRIVATE -Wall
+PRIVATE -g
 PRIVATE -target x86_64-unknown-none
 PRIVATE -Wextra
 PRIVATE -nostdinc

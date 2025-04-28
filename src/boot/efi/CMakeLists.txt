@@ -7,6 +7,7 @@ set(SOURCES
 "src/memory_services.c"
 "src/virtual_memory.c"
 "src/acpi.c"
+"src/elf.c"
 "src/paging.S")
 add_executable(AquaBoot ${SOURCES})
 
@@ -15,7 +16,6 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -masm=intel")
 target_compile_options(AquaBoot
 PRIVATE -g
 PRIVATE -target x86_64-unknown-none
-PRIVATE -O2
 PRIVATE -pipe
 PRIVATE -Wall
 PRIVATE -Wextra

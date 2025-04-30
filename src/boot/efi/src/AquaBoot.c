@@ -1,7 +1,7 @@
 #include <efi.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include "inc/aquaboot.h"
+#include "inc/boot_protocol/aquaboot.h"
 #include "inc/fs/ext2.h"
 #include "inc/memory_services.h"
 #include "inc/print.h"
@@ -18,9 +18,6 @@
 #define AQUABOOT_MINOR 1
 #define AQUABOOT_PATCH 0
 
-#define PT_ADDR_MASK ((uint64_t)0x0000fffffffff000)
-#define pte_addr(pte) ((pte) & PT_ADDR_MASK)
-
 EFI_SYSTEM_TABLE *sysT = NULL;
 EFI_HANDLE imgH = NULL;
 
@@ -31,6 +28,8 @@ BOOLEAN found_kernel = FALSE;
 EFI_MEMORY_DESCRIPTOR *memory_map;
 
 uint64_t map_key;
+
+uint64_t hhdm_offset = 0xFFFF800000000000;
 
 void *memcpy(void *dest, const void *src, size_t n) {
     asm volatile(
@@ -60,11 +59,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
     sysT = SystemTable;
     imgH = ImageHandle;
 
-    aquaboot_info *boot_info;
-    boot_info->aquaboot_major = AQUABOOT_MAJOR;
-    boot_info->aquaboot_minor = AQUABOOT_MINOR;
-    boot_info->aquaboot_patch = AQUABOOT_PATCH;
-
     // Clear the screen
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
     
@@ -87,13 +81,16 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
+    aquaboot_info boot_info;
+    boot_info.aquaboot_major = AQUABOOT_MAJOR;
+    boot_info.aquaboot_minor = AQUABOOT_MINOR;
+    boot_info.aquaboot_patch = AQUABOOT_PATCH;
+
+    boot_info.hhdm = hhdm_offset;
+
     // Extra feature: Check if Windows is installed (check EFI/Microsoft/* for bootmgr.efi), and allow user to boot to it if they want
 
     int kernel_inode_num = 0;
-    struct ext2_inode *kernel_ino;
-    struct elf_header *kernel_hdr;
-    struct program_header *kernel_phdr;
-    uint8_t block_buf[4096];
 
     found_kernel = read_filepath("/Aqua64/System/aquakernel.elf", sizeof("/Aqua64/System/aquakernel.elf"), &kernel_inode_num);
 
@@ -104,35 +101,40 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         if(!is_elf(kernel_inode_num))
         {
             print(u"Kernel's ELF header could not be validated! May be corrupted. Aborting...\r\n");
+            bpanic();
         }
 
-        uint64_t kernel_paddr = load_elf(kernel_inode_num);
+        uint64_t kernel_load_offs;
+        uint64_t kernel_paddr = load_elf(kernel_inode_num, &kernel_load_offs);
         uint64_t kernel_vaddr = 0xffffffff80000000;
         bdebug(INFO, "Kernel loaded at 0x%x\r\n", kernel_paddr);
 
         print(u"Allocated Memory for kernel! Loading...\r\n");
 
-        aquaboot_framebuffer *framebuffer;
-        init_video_services(framebuffer);
-
-        changeBackgroundColor(0x2b60de);
-        display_logo();
+        bdebug(INFO, "Address of 0x%x\r\n", &boot_info);
 
         bdebug(INFO, "Setting up page tables...\r\n");
+
+        aquaboot_framebuffer *framebuffer = init_video_services();
+
+        boot_info.framebuffer = framebuffer;
+
+        bdebug(INFO, "Framebuffer Address: 0x%x\r\n", framebuffer->base);
 
         pagemap_t pagemap;
         pagemap = new_pagemap();
 
         bdebug(INFO, "Identity Mapping...\r\n");
 
-        map_pages(pagemap, 0x70000000, 0x70000000, 0x7, 0x10000000);
-        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x7, 0x6000);
+        map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
+        map_pages(pagemap, 0x70000000, 0x70000000, 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
+        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x6000);
 
-        changeBackgroundColor(0x000000);
+        bdebug(INFO, "Test 0x%x\r\n", virt_to_phys(pagemap, 0xFFFF800000002000));
 
-        boot_info->framebuffer = framebuffer;
+        boot_info.framebuffer->base = (hhdm_offset + framebuffer->base);
 
-        get_memory_map(map_key);
+        memory_map = get_memory_map(map_key);
 
         SystemTable->BootServices->ExitBootServices(ImageHandle, map_key);
 
@@ -144,14 +146,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         extern void loadPageTables(uint64_t pml4);
 
-        loadPageTables(pagemap.top_level);
+        loadPageTables((pagemap.top_level));
 
-        void (*kernel_main)(aquaboot_info *boot_info) = (void(*)(aquaboot_info *boot_info)) kernel_vaddr;
+        void (*kernel_main)(aquaboot_info*) = (void(*)(aquaboot_info*)) kernel_load_offs;
 
-        kernel_main(boot_info);
+        kernel_main(&boot_info);
 
         asm volatile("mov $1, %eax");   // For debugging purposes, tells us if we didn't jump to kernel entry
-        for(;;);    // We can't call bpanic anymore, so just halt the system
+        hlt();    // We can't call bpanic anymore, so just halt the system
     }
 
     // TODO: Check Boot Medium (eg. USB) for 

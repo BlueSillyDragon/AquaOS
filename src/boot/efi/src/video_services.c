@@ -1,4 +1,4 @@
-#include "inc/aquaboot.h"
+#include "inc/boot_protocol/aquaboot.h"
 #include "inc/globals.h"
 #include "inc/print.h"
 #include "inc/video_services.h"
@@ -10,7 +10,7 @@ EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
 
 aquaboot_framebuffer *fb;
 
-void init_video_services(aquaboot_framebuffer *framebuffer) {
+aquaboot_framebuffer *init_video_services() {
     EFI_STATUS sta;
     sta = sysT->BootServices->LocateProtocol(&gopGuid, NULL, (void**)&gop);
 
@@ -54,7 +54,7 @@ void init_video_services(aquaboot_framebuffer *framebuffer) {
     fb->pixelsPerScanline = gop->Mode->Info->PixelsPerScanLine;
     fb->pitch = (fb->pixelsPerScanline * 4);
 
-    framebuffer = fb;
+    return fb;
 }
 
 void plotPixels (int x, int y, uint32_t pixel) {

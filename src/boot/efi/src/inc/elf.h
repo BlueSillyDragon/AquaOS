@@ -59,5 +59,5 @@ struct program_header
 
 int is_elf(uint64_t ino_num);
 
-// Returns the address of where the elf was loaded, returned as a uint64_t for ease of mapping
-uint64_t load_elf(uint64_t ino_num);
+// Returns the address of where the elf was loaded, returned as a uint64_t for ease of mapping (also returns the entry offsetin entry_offs)
+uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs);

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+
 typedef struct {
     uint64_t base;
     uint64_t size;
@@ -22,9 +23,11 @@ typedef struct
 
 typedef struct
 {
-    uint64_t aquaboot_major;    // We'll pass the version of AquaBoot to Kernel for the sake of it
-    uint64_t aquaboot_minor;
-    uint64_t aquaboot_patch;
+    uint32_t aquaboot_major;    // We'll pass the version of AquaBoot to Kernel for the sake of it
+    uint32_t aquaboot_minor;
+    uint32_t aquaboot_patch;
+
+    uint64_t hhdm;  // Pass the Higher-Half Direct Map to the Kernel
 
     aquaboot_framebuffer *framebuffer;  // Obviously we need to pass the framebuffer to the Kernel
 } aquaboot_info;

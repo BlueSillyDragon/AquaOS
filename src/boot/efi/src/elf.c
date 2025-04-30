@@ -40,7 +40,7 @@ int is_elf(uint64_t ino_num)
     return 0;
 }
 
-uint64_t load_elf(uint64_t ino_num)
+uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
 {
     struct ext2_inode *ino;
     struct elf_header *ino_hdr;
@@ -51,10 +51,11 @@ uint64_t load_elf(uint64_t ino_num)
     ino = read_inode(ino_num);
     read_block(ino->i_block[0], block_buf);
     ino_hdr = &block_buf;
+    *entry_offs = ino_hdr->p_entry_offs;
+
+    bdebug(INFO, "Kernel load offs: 0x%x\r\n", *entry_offs);
 
     ino_phdr = &block_buf[ino_hdr->p_table_offs];
-
-    bdebug(INFO, "Kernel load offs: 0x%x\r\n", ino_hdr->p_entry_offs);
 
     // Load into memory
     ino = read_inode(ino_num);  // Read again just to insure that nothing has changed

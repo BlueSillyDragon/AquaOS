@@ -29,11 +29,23 @@
 #define PD_ID(virt) (((virt) >> 21) & 0x1FF)
 #define PT_ID(virt) (((virt) >> 12) & 0x1FF)
 
+void *memset(void *s, int c, size_t n) {
+    uint8_t *p = (uint8_t *)s;
+
+    for (size_t i = 0; i < n; i++) {
+        p[i] = (uint8_t)c;
+    }
+
+    return s;
+}
+
 pagemap_t new_pagemap()
 {
     pagemap_t pagemap;
     pagemap.levels = 4;
     uefi_allocate_pages(1, &pagemap.top_level);
+    memset((uint64_t *)pagemap.top_level, 0x0, 0x1000);
+
     return pagemap;
 }
 
@@ -49,6 +61,7 @@ uint64_t *get_lower_level(uint64_t *current_level, uint64_t entry, uint64_t leve
         bdebug(INFO, "Entry not found, creating new entry...\r\n");
         uint64_t next_lvl_addr;
         uefi_allocate_pages(1, &next_lvl_addr);
+        memset((uint64_t *)next_lvl_addr, 0x0, 0x1000);
         next_level = (uint64_t *)next_lvl_addr;
         bdebug(INFO, "Level %d allocated at 0x%x\r\n", level, next_level);
         current_level[entry] = pte_new((size_t)next_level, PT_TABLE_FLAGS);
@@ -94,8 +107,6 @@ void map_page(pagemap_t pagemap, uint64_t virt_address, uint64_t phys_address, u
     pml1[pml1_idx] = (uint64_t)(phys_address | flags);
 
     if(!PT_IS_TABLE(pml1[pml1_idx])) {bdebug(INFO, "Not mapping a 4KB page!\r\n");}
-
-    bdebug(INFO, "PML1 Entry: 0x%x\r\n", pte_addr(pml1[pml1_idx]));
 }
 
 void map_pages(pagemap_t pagemap, uint64_t virt_address, uint64_t phys_address, uint64_t flags, uint64_t count) {
@@ -133,4 +144,6 @@ uint64_t virt_to_phys(pagemap_t pagemap, uint64_t virt_address)
     pml1 = get_lower_level(pml2, pml2_idx, 1);
 
     bdebug(INFO, "Virtual Address 0x%x is mapped to Physical Address 0x%x\r\n", virt_address, (pte_addr(pml1[pml1_idx])));
+
+    return (pte_addr(pml1[pml1_idx]));
 }

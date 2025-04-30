@@ -5,13 +5,6 @@ AquaOS is a hobby operating system built from scratch for x86, written in C++.
 
 ## How to Build and Run AquaOS
 
-> [!NOTE]
-> AquaOS currently only has a basic bootloader done.
-> So no kernel yet, sorry
-
-> [!WARNING]
-> AquaOS will build on Windows (using WSL), however I can't guarantee this will always work (Why're you using Windows for OSDev anyways?)
-
 ### Step 1: Clone repository
 
 If you don't already have the source code, you'll have to clone it using the following commands:
@@ -115,6 +108,38 @@ Initializing FileSystem Services...
 the AquaOS Kernel must be located on an Ext2 Partition!
 ```
 Congratulations! You have succesfully built and ran AquaOS!
+
+However, you would probably like to be able to boot into the kernel. AquaBoot can't boot off of boot medium yet (gotta add that). This is simple enough.
+
+### Step 7: Booting into kernel
+
+You can use anything that can be partitioned, like an .img, I'll be using a USB in my example.
+
+First, partition the device to have an ESP (EFI System Partition) and an Ext2 Partition. Now all you have to do is copy the bootloader file and kernel file
+to the proper locations. AquaBoot should be copied to EFI/BOOT/* and rename AquaBoot.efi to BOOTX64.EFI
+> [!WARNING]
+> If you're trying to put this on real hardware, **PLEASE** make sure that you copy it to a different location.
+> I would recommend something like AquaOS/aquaboot.efi, and then add that to your boot options.
+Then copy AquaKernel to the Ext2 partition at /Aqua64/System/* make sure it's called aquakernel.elf
+
+Specifically, I have these commands in a .sh file to make my life easier (feel free to use it if you want)
+```
+sudo losetup --offset 1048576 --sizelimit 46934528 /dev/loop0 /path/to/device
+sudo mount /dev/loop0 /mnt
+sudo cp /path/to/bootloader /mnt/EFI/BOOT/BOOTX64.EFI
+sudo umount /mnt
+sudo losetup -d /dev/loop0
+sudo losetup /dev/loop0 /path/to/device/part2
+sudo mount /dev/loop0 /mnt
+sudo rm /mnt/Aqua64/System/aquakernel.elf
+sudo cp /path/to/kernel /mnt/Aqua64/System
+sudo umount /mnt
+sudo losetup -d /dev/loop0
+```
+Now when you run AquaOS, you should be booted into the kernel, and seeing a cool ASCII art logo!
+> [!NOTE]
+> If the Bootloader claims the kernel cannot be found, first confirm that the kernel is in the correct location.
+> If it is, you can use debugfs to check the inode number of the kernel and directories (If it's an absurdly high number, that's probably why)
 
 ## Technologies
 limine-efi as a UEFI library, and AquaBoot is the custom bootloader.

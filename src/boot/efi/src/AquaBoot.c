@@ -117,12 +117,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         boot_info.hhdm = hhdm_offset;
 
-        aquaboot_framebuffer *framebuffer = init_video_services();
+        aquaboot_framebuffer *framebuffer;
+        framebuffer = init_video_services();
 
         boot_info.framebuffer = framebuffer;
         boot_info.pitch = framebuffer->pitch;
 
-        bdebug(INFO, "Framebuffer Address: 0x%x\r\n", framebuffer->base);
+        bdebug(INFO, "Framebuffer Address: 0x%x\r\n", boot_info.framebuffer);
 
         pagemap_t pagemap;
         pagemap = new_pagemap();
@@ -151,9 +152,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         loadPageTables((pagemap.top_level));
 
-        void (*kernel_main)(aquaboot_info) = (void(*)(aquaboot_info)) kernel_load_offs;
+        void (*kernel_main)(aquaboot_info*) = (void(*)(aquaboot_info*)) kernel_load_offs;
 
-        kernel_main(boot_info);
+        kernel_main(&boot_info);
 
         asm volatile("mov $1, %eax");   // For debugging purposes, tells us if we didn't jump to kernel entry
         hlt();    // We can't call bpanic anymore, so just halt the system

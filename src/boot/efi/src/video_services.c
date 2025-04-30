@@ -1,17 +1,18 @@
 #include "inc/boot_protocol/aquaboot.h"
 #include "inc/globals.h"
 #include "inc/print.h"
+#include "inc/memory_services.h"
 #include "inc/video_services.h"
 #include "inc/logo.h"
+#include <stdint.h>
 
 EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
 
-aquaboot_framebuffer *fb;
-
 aquaboot_framebuffer *init_video_services() {
     EFI_STATUS sta;
+    aquaboot_framebuffer *fb;
     sta = sysT->BootServices->LocateProtocol(&gopGuid, NULL, (void**)&gop);
 
     if (EFI_ERROR(sta)) {
@@ -47,6 +48,10 @@ aquaboot_framebuffer *init_video_services() {
         asm volatile ( "hlt" );
     }
 
+    uint64_t fb_ptr;
+    uefi_allocate_pages(1, &fb_ptr);
+    fb = (uint64_t *)fb_ptr;
+
     fb->base = gop->Mode->FrameBufferBase;
     fb->size = gop->Mode->FrameBufferSize;
     fb->horizontalRes = gop->Mode->Info->HorizontalResolution;
@@ -60,13 +65,13 @@ aquaboot_framebuffer *init_video_services() {
 void plotPixels (aquaboot_framebuffer *framebuffer, int x, int y, uint32_t pixel) {
     volatile uint32_t *fb_ptr = (uint32_t *)framebuffer->base;
 
-    fb_ptr[x * (fb->pitch / 4) + y] = pixel;
+    fb_ptr[x * (framebuffer->pitch / 4) + y] = pixel;
 }
 
 void changeBackgroundColor(aquaboot_framebuffer *framebuffer, uint32_t bgColor) {
 
-    for (int i = 0; i < fb->verticalRes; i++) {
-        for (int j = 0; j < fb->horizontalRes; j++) {
+    for (int i = 0; i < framebuffer->verticalRes; i++) {
+        for (int j = 0; j < framebuffer->horizontalRes; j++) {
             plotPixels(framebuffer,i, j, bgColor);
         }
     }

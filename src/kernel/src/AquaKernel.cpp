@@ -60,13 +60,13 @@ void hlt()
     asm volatile(" hlt ");
 }
 
-extern "C" void kernel_main (aquaboot_info boot_info)
+extern "C" void kernel_main (aquaboot_info *boot_info)
 {
-    std::uint64_t stuff = (boot_info.hhdm + 0x80000000);
+    std::uint64_t stuff = ((uint64_t)boot_info->hhdm + boot_info->framebuffer->base);
     asm volatile ("mov %0, %%rax" :: "a"(stuff));
     for (std::size_t i = 0; i < 100; i++) {
         std::uint64_t *fb_ptr = (uint64_t *)stuff;
-        fb_ptr[i * (boot_info.pitch / 4) + i] = 0xffffff;
+        fb_ptr[i * (boot_info->framebuffer->pitch / 4) + i] = 0xffffff;
     }
     hlt();
 }

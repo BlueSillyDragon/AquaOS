@@ -132,7 +132,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
         map_pages(pagemap, 0x70000000, 0x70000000, 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
-        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x6000);
+        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0xf000);
 
         bdebug(INFO, "Framebuffer: %x\r\n", boot_info.framebuffer->base);
 

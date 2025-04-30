@@ -58,29 +58,22 @@ uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
     ino_phdr = &block_buf[ino_hdr->p_table_offs];
 
     // Load into memory
-    ino = read_inode(ino_num);  // Read again just to insure that nothing has changed
-    read_block(ino->i_block[1], block_buf); // Just reading second block for now
-
-    for(int i = 0; i < 4096; i++)
-    {
-        bdebug(NONE, "%c", block_buf[i]);
-    }
-    bdebug(NONE, "\r\n");
-
-    uefi_allocate_pages(1, &phys_addr);
+    uefi_allocate_pages(8, &phys_addr);
 
     char *pt = (uint64_t *)phys_addr;
 
-    for(uint64_t i = 0; i < 4096; i++)
+    for(int i = 1; i < 5; i++)
     {
-        pt[i] = block_buf[i];
+        ino = read_inode(ino_num);  // Read again just to insure that nothing has changed
+        read_block(ino->i_block[i], block_buf); // Just reading second block for now
+        for(uint64_t i = 0; i < 4096; i++)
+        {
+            pt[i] = block_buf[i];
+            bdebug(NONE, "%c", block_buf[i]);
+        }
+        bdebug(NONE, "\r\n");
+        pt += 0x1000;
     }
-
-    for(int i = 0; i < 4096; i++)
-    {
-        bdebug(NONE, "%c", pt[i]);
-    }
-    bdebug(NONE, "\r\n");
 
     return phys_addr;
 }

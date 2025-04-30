@@ -81,13 +81,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     init_fs_services();
 
-    aquaboot_info boot_info;
-    boot_info.aquaboot_major = AQUABOOT_MAJOR;
-    boot_info.aquaboot_minor = AQUABOOT_MINOR;
-    boot_info.aquaboot_patch = AQUABOOT_PATCH;
-
-    boot_info.hhdm = hhdm_offset;
-
     // Extra feature: Check if Windows is installed (check EFI/Microsoft/* for bootmgr.efi), and allow user to boot to it if they want
 
     int kernel_inode_num = 0;
@@ -111,13 +104,23 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         print(u"Allocated Memory for kernel! Loading...\r\n");
 
-        bdebug(INFO, "Address of 0x%x\r\n", &boot_info);
+        aquaboot_info boot_info;
+        uefi_allocate_pages(1, &boot_info);
+        boot_info.aquaboot_major = AQUABOOT_MAJOR;
+        boot_info.aquaboot_minor = AQUABOOT_MINOR;
+        boot_info.aquaboot_patch = AQUABOOT_PATCH;
+
+
+        bdebug(INFO, "Address of Boot Info0x%x\r\n", &boot_info);
 
         bdebug(INFO, "Setting up page tables...\r\n");
+
+        boot_info.hhdm = hhdm_offset;
 
         aquaboot_framebuffer *framebuffer = init_video_services();
 
         boot_info.framebuffer = framebuffer;
+        boot_info.pitch = framebuffer->pitch;
 
         bdebug(INFO, "Framebuffer Address: 0x%x\r\n", framebuffer->base);
 
@@ -130,9 +133,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         map_pages(pagemap, 0x70000000, 0x70000000, 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
         map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x6000);
 
-        bdebug(INFO, "Test 0x%x\r\n", virt_to_phys(pagemap, 0xFFFF800000002000));
+        bdebug(INFO, "Framebuffer: %x\r\n", boot_info.framebuffer->base);
 
-        boot_info.framebuffer->base = (hhdm_offset + framebuffer->base);
+        bdebug(INFO, "Pitch %d\r\n", boot_info.pitch);
 
         memory_map = get_memory_map(map_key);
 
@@ -148,9 +151,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         loadPageTables((pagemap.top_level));
 
-        void (*kernel_main)(aquaboot_info*) = (void(*)(aquaboot_info*)) kernel_load_offs;
+        void (*kernel_main)(aquaboot_info) = (void(*)(aquaboot_info)) kernel_load_offs;
 
-        kernel_main(&boot_info);
+        kernel_main(boot_info);
 
         asm volatile("mov $1, %eax");   // For debugging purposes, tells us if we didn't jump to kernel entry
         hlt();    // We can't call bpanic anymore, so just halt the system

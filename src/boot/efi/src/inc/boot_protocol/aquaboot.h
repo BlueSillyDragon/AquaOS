@@ -29,5 +29,7 @@ typedef struct
 
     uint64_t hhdm;  // Pass the Higher-Half Direct Map to the Kernel
 
+    uint32_t pitch;
+
     aquaboot_framebuffer *framebuffer;  // Obviously we need to pass the framebuffer to the Kernel
 } aquaboot_info;

@@ -57,23 +57,23 @@ aquaboot_framebuffer *init_video_services() {
     return fb;
 }
 
-void plotPixels (int x, int y, uint32_t pixel) {
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->base;
+void plotPixels (aquaboot_framebuffer *framebuffer, int x, int y, uint32_t pixel) {
+    volatile uint32_t *fb_ptr = (uint32_t *)framebuffer->base;
 
     fb_ptr[x * (fb->pitch / 4) + y] = pixel;
 }
 
-void changeBackgroundColor(uint32_t bgColor) {
+void changeBackgroundColor(aquaboot_framebuffer *framebuffer, uint32_t bgColor) {
 
     for (int i = 0; i < fb->verticalRes; i++) {
         for (int j = 0; j < fb->horizontalRes; j++) {
-            plotPixels(i, j, bgColor);
+            plotPixels(framebuffer,i, j, bgColor);
         }
     }
 
 }
 
-void display_logo()
+void display_logo(aquaboot_framebuffer *framebuffer)
 {
     int k = 0;
 
@@ -81,11 +81,11 @@ void display_logo()
         for (int j = 0; j < AQUAOS_LOGO_WIDTH; j++) {
 
             if (aquaos_logo[k] == 0x000000) {
-                plotPixels(i + (fb->verticalRes / 4), j + (fb->horizontalRes / 4), AQUABOOT_BG);
+                plotPixels(framebuffer, i + (framebuffer->verticalRes / 4), j + (framebuffer->horizontalRes / 4), AQUABOOT_BG);
             }
 
             else {
-                plotPixels(i + (fb->verticalRes / 4), j + (fb->horizontalRes / 4), aquaos_logo[k]);
+                plotPixels(framebuffer, i + (framebuffer->verticalRes / 4), j + (framebuffer->horizontalRes / 4), aquaos_logo[k]);
             }
             k++;
         }

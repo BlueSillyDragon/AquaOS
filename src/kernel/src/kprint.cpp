@@ -4,7 +4,7 @@
 #include <inc/krnl_colors.hpp>
 #include <inc/krnl_font.hpp>
 #include <inc/logo.hpp>
-#include <inc/krpint.hpp>
+#include <inc/kprint.hpp>
 
 int cursor_x;
 int cursor_y;
@@ -102,7 +102,7 @@ void kprintf(char* string, ...) {
             else if (string[i] == 'x') {
                 std::uint64_t int_to_kprintf = va_arg(argp, int);
                 std::uint64_t number[100];
-                int j = 0;
+                std::uint64_t j = 0;
                 do{
                     number[j] = (int_to_kprintf % 16);
                     int_to_kprintf = (int_to_kprintf - int_to_kprintf % 16) / 16;

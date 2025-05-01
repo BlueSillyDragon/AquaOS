@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdarg>
-#include <inc/krpint.hpp>
+#include <inc/kprint.hpp>
 #include "inc/krnl_colors.hpp"
 #include "inc/sys/gdt.hpp"
 #include "inc/sys/idt.hpp"
@@ -93,22 +93,25 @@ void enable_interrupts()
 static bool vectors[256];
 extern "C" void *isr_stub_table[];
 
+extern "C" void setIDT(std::uint16_t limit, std::uint64_t base);
+
 void idt_set_desc(std::uint8_t vector, void *isr, std::uint8_t flags, idt_entry_t *idt)
 {
     idt_entry_t *descriptor = &idt[vector];
 
-    descriptor->isr_low = ((std::uint64_t)isr & 0xFFFF);
+    descriptor->isr_low = (std::uint64_t)isr;
     descriptor->kernel_cs = 0x08;
     descriptor->ist = 0;
     descriptor->attributes = flags;
-    descriptor->isr_mid        = ((uint64_t)isr >> 16) & 0xFFFF;
-    descriptor->isr_high       = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
+    descriptor->isr_mid  = ((uint64_t)isr >> 16);
+    descriptor->isr_high = ((uint64_t)isr >> 32);
     descriptor->reserved = 0;
 }
 
-void init_idt(idtr_t idtr, idt_entry_t *idt)
+void init_idt(uint64_t hhdm, idt_entry_t *idt)
 {
-    idtr.offset = (std::uintptr_t)&idt[0];
+    idtr_t idtr;
+    idtr.offset = (hhdm + (std::uint64_t) + &idt);
     idtr.size = (std::uint16_t)sizeof(idt_entry_t) * 256 - 1;
 
     for(std::uint8_t vector = 0; vector < 32; vector++)
@@ -116,12 +119,10 @@ void init_idt(idtr_t idtr, idt_entry_t *idt)
         idt_set_desc(vector, isr_stub_table[vector], 0x8e, idt);
         vectors[vector] = true;
     }
-    kprintf("IDTR Offset: 0x%x\n", idtr.offset);
-    __asm__ volatile ("lidt %0" : : "m"(idtr));
-    __asm__ volatile ("sti");
+    setIDT(idtr.size, idtr.offset);
 }
 
-extern "C" void divErr(void);
+extern "C" void int0(void);
 
 extern "C" void kernel_main (aquaboot_info *boot_info)
 {
@@ -154,12 +155,11 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     cursor_x += 2;
     kprintf("GDT Initialized!\n");
 
-    __attribute__((aligned(0x10))) static idt_entry_t idt[256];
-    static idtr_t idtr;
+    static idt_entry_t idt[256];
 
-    init_idt(idtr, idt);
+    init_idt(0xffff800000000000, idt);
 
-    //divErr(); Triple Faults and doesn't jump to the exception handler
+    __asm__  ("div %0" :: "r"(0));
 
     hlt();
 }

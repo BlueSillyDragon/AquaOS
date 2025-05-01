@@ -1,5 +1,5 @@
 #include <aquaboot.h>
-#include <inc/krpint.hpp>
+#include <inc/kprint.hpp>
 
 __attribute__((noreturn))
 extern "C" void exception_handler() {

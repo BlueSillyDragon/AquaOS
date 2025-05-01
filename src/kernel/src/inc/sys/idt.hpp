@@ -4,7 +4,7 @@ typedef struct
 {
     std::uint16_t size;
     std::uint64_t offset;
-} idtr_t;
+} __attribute__((packed)) idtr_t;
 
 typedef struct
 {
@@ -15,4 +15,4 @@ typedef struct
     std::uint16_t isr_mid;
     std::uint32_t isr_high;
     std::uint32_t reserved;
-} idt_entry_t;
+} __attribute__((packed)) idt_entry_t;

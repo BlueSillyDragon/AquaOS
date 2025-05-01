@@ -2,12 +2,14 @@
 
 %macro isr_err_stub 1
 isr_stub_%+%1:
+    cli
     call exception_handler
     iretq
 %endmacro
 
 %macro isr_no_err_stub 1
 isr_stub_%+%1:
+    cli
     call exception_handler
     iretq
 %endmacro
@@ -47,7 +49,6 @@ isr_err_stub    30
 isr_no_err_stub 31
 
 global isr_stub_table
-
 isr_stub_table:
 %assign i 0 
 %rep    32 
@@ -55,7 +56,16 @@ isr_stub_table:
 %assign i i+1 
 %endrep
 
-global divErr
+global setIDT
+idtr DW 0
+     DQ 0
+setIDT:
+   mov   [idtr], di
+   mov   [idtr+2], rsi
+   lidt  [idtr]
+   sti
+   ret
 
-divErr:
+global int0
+int0:
     int 0x0

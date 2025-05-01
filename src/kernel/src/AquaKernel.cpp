@@ -2,14 +2,24 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdarg>
+#include <inc/krpint.hpp>
 #include "inc/krnl_colors.hpp"
-#include "inc/krnl_font.hpp"
-#include "inc/logo.hpp"
-#include "inc/gdt.hpp"
+#include "inc/sys/gdt.hpp"
+#include "inc/sys/idt.hpp"
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
 #define KERNEL_PATCH 0
+
+std::uint64_t HHDM;
+
+extern int cursor_x;
+extern int cursor_y;
+
+extern std::uint32_t terminal_foreground;
+extern std::uint32_t terminal_background;
+
+extern aquaboot_framebuffer *framebuffer;
 
 extern "C" {
 
@@ -75,137 +85,48 @@ void disable_interrupts()
     asm volatile(" cli ");
 }
 
-static void plot_pixels (int y, int x, uint32_t pixel, aquaboot_framebuffer *fb) {
-    std::uint64_t stuff = fb->base;
-
-    std::uint32_t *fb_ptr = (uint32_t *)stuff;
-    fb_ptr[x * (fb->pitch / 4) + y] = pixel;
-}
-
-int cursor_x;
-int cursor_y;
-
-std::uint32_t terminal_foreground;
-std::uint32_t terminal_background;
-
-void putchar (unsigned short int c, uint32_t fg, uint32_t bg, aquaboot_framebuffer *fb) {
-    uint32_t pixel;
-    
-    for (int cy = 0; cy < 16; cy++) {
-        for (int cx = 0; cx < 8; cx++) {
-            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? fg : bg;
-
-            // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
-            plot_pixels((cx + (cursor_x * 8)), (cy + (cursor_y * 16)), pixel, fb);
-        }
-    }
-
-}
-
-void print(char* string, aquaboot_framebuffer *fb, ...) {
-
-    std::va_list argp;
-    va_start(argp, string);
-
-    for (int i = 0;;i++) {
-
-        // Check if the character is NULL, if it is, we've hit the end of the string
-        if (string[i] == 0x00) {
-            break;
-        }
-
-        // Check if it's '\n' if it is. move the cursor down.
-        if (string[i] == 0x0A) {
-            cursor_y++;
-            cursor_x = 0;
-            continue;
-        }
-
-        // Check if it's '\t' if it is, move the cursor foward by 6 spaces
-        if (string[i] == 0x09) {
-            cursor_x += 6;
-            continue;
-        }
-
-        // Check the variable arguments
-        if (string[i] == '%') {
-
-            i++;
-
-            if (string[i] == '%') {
-                putchar('%', terminal_foreground, terminal_background, fb);
-                cursor_x++;
-                continue;
-            }
-
-            else if (string[i] == 'c')
-            {
-                char char_to_print = va_arg(argp, int);
-                putchar(char_to_print, terminal_foreground, terminal_background, fb);
-                cursor_x++;
-                continue;
-            }
-
-            else if (string[i] == 'd') {
-                int int_to_print = va_arg(argp, int);
-                int number[100];
-                int j = 0;
-                do{
-                    number[j] = (int_to_print % 10);
-                    int_to_print = (int_to_print - int_to_print % 10) / 10;
-                    j++;
-                } while (int_to_print > 0);
-
-                j--;
-
-                for (; j>=0; j--) {
-                    putchar((number[j] + '0'), terminal_foreground, terminal_background, fb);
-                    cursor_x++;
-                }
-
-                continue;
-            }      
-
-            else {
-                putchar('0', terminal_foreground, terminal_background, fb);
-                cursor_x++;
-                continue;
-            }
-
-            i--;
-        }
-
-        putchar(string[i], terminal_foreground, terminal_background, fb);
-
-        cursor_x++;
-    }
-
-    va_end(argp);
-
-}
-
-void display_logo(aquaboot_framebuffer *fb) {
-    print(kernel_logo, fb);
-}
-
-void kerror(char * string, aquaboot_framebuffer *fb)
+void enable_interrupts()
 {
-    putchar('[', terminal_foreground, terminal_background, fb);
-    cursor_x++;
-    terminal_foreground = KRNL_RED;
-    print("Error", fb);
-    terminal_foreground = KRNL_WHITE;
-    putchar(']', terminal_foreground, terminal_background, fb);
-    cursor_x += 2;
-    print(string, fb);
+    asm volatile(" sti ");
 }
 
-extern "C" void setGDT(std::uint16_t limit, std::uint64_t base);
-extern "C" void reloadSegments(void);
+static bool vectors[256];
+extern "C" void *isr_stub_table[];
+
+void idt_set_desc(std::uint8_t vector, void *isr, std::uint8_t flags, idt_entry_t *idt)
+{
+    idt_entry_t *descriptor = &idt[vector];
+
+    descriptor->isr_low = ((std::uint64_t)isr & 0xFFFF);
+    descriptor->kernel_cs = 0x08;
+    descriptor->ist = 0;
+    descriptor->attributes = flags;
+    descriptor->isr_mid        = ((uint64_t)isr >> 16) & 0xFFFF;
+    descriptor->isr_high       = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
+    descriptor->reserved = 0;
+}
+
+void init_idt(idtr_t idtr, idt_entry_t *idt)
+{
+    idtr.offset = (std::uintptr_t)&idt[0];
+    idtr.size = (std::uint16_t)sizeof(idt_entry_t) * 256 - 1;
+
+    for(std::uint8_t vector = 0; vector < 32; vector++)
+    {
+        idt_set_desc(vector, isr_stub_table[vector], 0x8e, idt);
+        vectors[vector] = true;
+    }
+    kprintf("IDTR Offset: 0x%x\n", idtr.offset);
+    __asm__ volatile ("lidt %0" : : "m"(idtr));
+    __asm__ volatile ("sti");
+}
+
+extern "C" void divErr(void);
 
 extern "C" void kernel_main (aquaboot_info *boot_info)
 {
     boot_info->framebuffer->base = (boot_info->hhdm + boot_info->framebuffer->base);    // Make sure we have the correct address
+    framebuffer = boot_info->framebuffer;
     std::uint64_t stuff = boot_info->framebuffer->base;
     asm volatile("mov %0, %%rax" :: "a"(stuff));
     
@@ -214,40 +135,31 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     terminal_foreground = KRNL_WHITE;
     terminal_background = KRNL_BLACK;
 
-    display_logo(boot_info->framebuffer);
+    display_logo();
 
-    print("\n\nBooted by AquaBoot Version %d.%d.%d\n", boot_info->framebuffer,
+    kprintf("\n\nBooted by AquaBoot Version %d.%d.%d\n",
                                                                 boot_info->aquaboot_major,
                                                                 boot_info->aquaboot_minor,
                                                                 boot_info->aquaboot_patch);
-    print("\nAquaKernel Version %d.%d.%d\n", boot_info->framebuffer, KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
+    kprintf("\nAquaKernel Version %d.%d.%d\n", KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
 
-    GDTR gdtr;
-    GDT gdt;
+    init_gdt(boot_info);
 
-    gdt.null_seg = NULL_SEG;
-    gdt.kernel_code = KERNEL_CODE_SEG;
-    gdt.kernel_data = KERNEL_DATA_SEG;
-    gdt.user_code = USER_CODE_SEG;
-    gdt.user_data = USER_DATA_SEG;
-
-    gdtr.offset = (boot_info->hhdm + (std::uint64_t)&gdt);
-    gdtr.size = sizeof(gdt);
-    asm volatile("mov %0, %%ax" :: "a"(gdtr.size));
-
-    disable_interrupts();
-
-    setGDT(gdtr.size, gdtr.offset);
-    reloadSegments();
-
-    putchar('[', terminal_foreground, terminal_background, boot_info->framebuffer);
+    putchar('[', terminal_foreground, terminal_background);
     cursor_x++;
     terminal_foreground = KRNL_GREEN;
-    print(" OK ", boot_info->framebuffer);
+    kprintf(" OK ");
     terminal_foreground = KRNL_WHITE;
-    putchar(']', terminal_foreground, terminal_background, boot_info->framebuffer);
+    putchar(']', terminal_foreground, terminal_background);
     cursor_x += 2;
-    print("GDT Initialized!", boot_info->framebuffer);
+    kprintf("GDT Initialized!\n");
+
+    __attribute__((aligned(0x10))) static idt_entry_t idt[256];
+    static idtr_t idtr;
+
+    init_idt(idtr, idt);
+
+    //divErr(); Triple Faults and doesn't jump to the exception handler
 
     hlt();
 }

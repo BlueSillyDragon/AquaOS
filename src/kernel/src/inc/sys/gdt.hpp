@@ -1,7 +1,7 @@
 #pragma once
 
+#include "aquaboot.h"
 #include <cstdint>
-#include <stdint.h>
 
 #define NULL_SEG 0x0
 #define KERNEL_CODE_SEG 0x00af9b000000ffff
@@ -13,13 +13,15 @@ typedef struct
 {
     std::uint16_t size;
     std::uint64_t offset;
-} GDTR;
+} gdtr_t;
 
 typedef struct
 {
-    uint64_t null_seg;
-    uint64_t kernel_code;
-    uint64_t kernel_data;
-    uint64_t user_code;
-    uint64_t user_data;
-} GDT;
+    std::uint64_t null_seg;
+    std::uint64_t kernel_code;
+    std::uint64_t kernel_data;
+    std::uint64_t user_code;
+    std::uint64_t user_data;
+} gdt_t;
+
+void init_gdt(aquaboot_info *boot_info);

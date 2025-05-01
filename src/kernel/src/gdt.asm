@@ -8,6 +8,7 @@ gdtr DW 0
      DQ 0
 
 setGDT:
+   cli
    mov   [gdtr], di
    mov   [gdtr+2], rsi
    lgdt  [gdtr]

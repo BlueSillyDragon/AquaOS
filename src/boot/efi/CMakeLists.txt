@@ -8,39 +8,37 @@ set(SOURCES
 "src/virtual_memory.c"
 "src/acpi.c"
 "src/elf.c"
-"src/paging.S")
+"src/paging.asm")
 add_executable(AquaBoot ${SOURCES})
 
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -masm=intel")
-
 target_compile_options(AquaBoot
-PRIVATE -g
-PRIVATE -target x86_64-unknown-none
-PRIVATE -pipe
-PRIVATE -Wall
-PRIVATE -Wextra
-PRIVATE -std=gnu11
-PRIVATE -nostdinc
-PRIVATE -ffreestanding
-PRIVATE -fno-stack-protector
-PRIVATE -fno-stack-check
-PRIVATE -fshort-wchar
-PRIVATE -fno-lto
-PRIVATE -fPIE
-PRIVATE -ffunction-sections
-PRIVATE -fdata-sections
-PRIVATE -I ../src/boot/efi/limine-efi/inc
-PRIVATE -I ../src/boot/efi/src
-PRIVATE -isystem ../src/boot/efi/freestanding-headers
-PRIVATE -m64
-PRIVATE -march=x86-64
-PRIVATE -mno-80387
-PRIVATE -mno-mmx
-PRIVATE -mno-sse
-PRIVATE -mno-sse2
-PRIVATE -mno-red-zone
-PRIVATE -MMD
-PRIVATE -MP)
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-g>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-target x86_64-unknown-none>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-pipe>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-Wall>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-Wextra>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-nostdinc>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fno-stack-check>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fshort-wchar>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fno-lto>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fPIE>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi/limine-efi/inc>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi/src>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-isystem ../src/boot/efi/freestanding-headers>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-m64>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-march=x86-64>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-80387>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-mmx>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-sse>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-sse2>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-MMD>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-MP>)
 
 target_link_options(AquaBoot
 PRIVATE -fuse-ld=lld

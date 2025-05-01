@@ -1,4 +1,4 @@
-set(SOURCES "src/AquaKernel.cpp")
+set(SOURCES "src/AquaKernel.cpp" "src/gdt.asm")
 
 add_executable(aquakernel.elf ${SOURCES})
 
@@ -10,29 +10,29 @@ target_include_directories(
 )
 
 target_compile_options(aquakernel.elf
-PRIVATE -Wall
-PRIVATE -g
-PRIVATE -target x86_64-unknown-none
-PRIVATE -O2
-PRIVATE -Wextra
-PRIVATE -nostdinc
-PRIVATE -ffreestanding
-PRIVATE -fno-stack-protector
-PRIVATE -fno-stack-check
-PRIVATE -fno-PIC
-PRIVATE -ffunction-sections
-PRIVATE -fdata-sections
-PRIVATE -I ../src/kernel/src
-PRIVATE -m64
-PRIVATE -march=x86-64
-PRIVATE -mno-80387
-PRIVATE -mno-mmx
-PRIVATE -mno-sse
-PRIVATE -mno-sse2
-PRIVATE -mno-red-zone
-PRIVATE -mcmodel=kernel
-PRIVATE -MMD
-PRIVATE -MP)
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-g>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-target x86_64-unknown-none>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-O2>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-nostdinc>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ffreestanding>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-stack-protector>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-stack-check>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-PIC>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fdata-sections>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-I ../src/kernel/src>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-m64>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-march=x86-64>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-80387>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-mmx>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-sse>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-sse2>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-red-zone>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=kernel>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MMD>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MP>)
 
 target_link_options(aquakernel.elf
 PRIVATE -Wl,-m,elf_x86_64

@@ -110,11 +110,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         boot_info.aquaboot_minor = AQUABOOT_MINOR;
         boot_info.aquaboot_patch = AQUABOOT_PATCH;
 
-
-        bdebug(INFO, "Address of Boot Info0x%x\r\n", &boot_info);
-
-        bdebug(INFO, "Setting up page tables...\r\n");
-
         boot_info.hhdm = hhdm_offset;
 
         aquaboot_framebuffer *framebuffer;
@@ -122,6 +117,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         boot_info.framebuffer = framebuffer;
         boot_info.pitch = framebuffer->pitch;
+
+
+        bdebug(INFO, "Address of Boot Info0x%x\r\n", &boot_info);
+
+        bdebug(INFO, "Setting up page tables...\r\n");
 
         bdebug(INFO, "Framebuffer Address: 0x%x\r\n", boot_info.framebuffer);
 

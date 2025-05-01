@@ -1,5 +1,6 @@
 #include "inc/boot_protocol/aquaboot.h"
 #include "inc/globals.h"
+#include "inc/log.h"
 #include "inc/print.h"
 #include "inc/memory_services.h"
 #include "inc/video_services.h"
@@ -41,11 +42,15 @@ aquaboot_framebuffer *init_video_services() {
 
     // Set video mode and get frame buffer
 
-    sta = gop->SetMode(gop, 10);
+    sta = gop->SetMode(gop, 12);
 
     if (EFI_ERROR(sta)) {
-        print(u"Could not set video mode!");
-        asm volatile ( "hlt" );
+        print(u"Could not set video mode! Defaulting to native...\r\n");
+        sta = gop->SetMode(gop, nativeMode);
+        if (EFI_ERROR(sta)) {
+            print(u"Failure to set video mode! Halting...\r\n");
+            asm volatile ( "hlt" );
+        }
     }
 
     uint64_t fb_ptr;

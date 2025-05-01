@@ -58,12 +58,12 @@ uint64_t *get_lower_level(uint64_t *current_level, uint64_t entry, uint64_t leve
     }
     else
     {
-        bdebug(INFO, "Entry not found, creating new entry...\r\n");
+        //bdebug(INFO, "Entry not found, creating new entry...\r\n");
         uint64_t next_lvl_addr;
         uefi_allocate_pages(1, &next_lvl_addr);
         memset((uint64_t *)next_lvl_addr, 0x0, 0x1000);
         next_level = (uint64_t *)next_lvl_addr;
-        bdebug(INFO, "Level %d allocated at 0x%x\r\n", level, next_level);
+        //bdebug(INFO, "Level %d allocated at 0x%x\r\n", level, next_level);
         current_level[entry] = pte_new((size_t)next_level, PT_TABLE_FLAGS);
         if(PT_IS_TABLE(current_level[entry])) bdebug(INFO, "Entry created!\r\n");
         else bdebug(ERROR, "Sad face =(\r\n");

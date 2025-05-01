@@ -36,6 +36,7 @@ int is_elf(uint64_t ino_num)
 
         // ELF is valid, so return true (1)
         return 1;
+
     }
     return 0;
 }
@@ -62,16 +63,15 @@ uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
 
     char *pt = (uint64_t *)phys_addr;
 
-    for(int i = 1; i < 5; i++)
+    for(int i = 1; i < 12; i++)
     {
         ino = read_inode(ino_num);  // Read again just to insure that nothing has changed
+        if(ino->i_block[i] == 0){break;}
         read_block(ino->i_block[i], block_buf); // Just reading second block for now
         for(uint64_t i = 0; i < 4096; i++)
         {
             pt[i] = block_buf[i];
-            bdebug(NONE, "%c", block_buf[i]);
         }
-        bdebug(NONE, "\r\n");
         pt += 0x1000;
     }
 

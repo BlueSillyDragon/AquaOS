@@ -1,7 +1,3 @@
-/* Font for SpecOS kernel. This is taken from the Linux font.
- * No copyright for this specific file. The rest of the SpecOS source is subject to the license specified on the GitHub repository.
- */
-
  #ifndef KRNLFONT_H
  #define KRNLFONT_H
  

@@ -1,4 +1,4 @@
-set(SOURCES "src/AquaKernel.cpp" "src/terminal.cpp")
+set(SOURCES "src/AquaKernel.cpp" "src/terminal.cpp" "src/sys/gdt.cpp" "src/sys/idt.cpp" "src/sys/interrupts.cpp" "src/sys/gdt.asm" "src/sys/idt.asm" "src/sys/isr.asm")
 
 add_executable(aquakernel.elf ${SOURCES})
 

@@ -2,9 +2,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdarg>
+#include <inc/krnl_colors.hpp>
+#include <inc/logo.hpp>
 #include <inc/terminal.hpp>
-#include "inc/krnl_colors.hpp"
-#include "inc/logo.hpp"
+#include <inc/sys/gdt.hpp>
+#include <inc/sys/idt.hpp>
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
@@ -73,6 +75,14 @@ void hlt()
     asm volatile(" hlt ");
 }
 
+Gdt gdt;
+gdtr_t gdtr;
+
+idtr_t idtr;
+Idt idt;
+
+extern "C" void divInt(void);
+
 extern "C" void kernel_main (aquaboot_info *boot_info)
 {
     boot_major = boot_info->aquaboot_major;
@@ -84,6 +94,31 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     kern_terminal.term_print(kernel_logo);
 
     kern_terminal.term_print("\n\n\tBooted by AquaBoot Version %d.%d.%d\n", boot_major, boot_minor, boot_patch);
-    kern_terminal.term_print("\n\tAquaKernel Version %d.%d.%d\n", KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
+    kern_terminal.term_print("\n\tAquaKernel Version %d.%d.%d\n\n", KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
+
+    gdt.GDTDescs.null_segment = 0x0;
+    gdt.GDTDescs.kernel_code = KERNEL_CS;
+    gdt.GDTDescs.kernel_data = KERNEL_DS;
+    gdt.GDTDescs.user_code = USER_CS;
+    gdt.GDTDescs.user_data = USER_DS;
+
+    gdt.loadGdt();
+
+    kern_terminal.term_print("[");
+    kern_terminal.change_colors(KRNL_GREEN, KRNL_BLACK);
+    kern_terminal.term_print(" OK ");
+    kern_terminal.change_colors(KRNL_WHITE, KRNL_BLACK);
+    kern_terminal.term_print("]");
+    kern_terminal.term_print(" GDT Initialized!\n");
+
+    idt.initIdt();
+
+    kern_terminal.term_print("[");
+    kern_terminal.change_colors(KRNL_GREEN, KRNL_BLACK);
+    kern_terminal.term_print(" OK ");
+    kern_terminal.change_colors(KRNL_WHITE, KRNL_BLACK);
+    kern_terminal.term_print("]");
+    kern_terminal.term_print(" IDT Initialized!\n");
+
     hlt();
 }

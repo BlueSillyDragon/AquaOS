@@ -79,8 +79,8 @@ void Terminal::term_print(char *string, ...)
             }
 
             else if (string[i] == 'd') {
-                int int_to_kprintf = va_arg(argp, int);
-                int number[100];
+                std::uint64_t int_to_kprintf = va_arg(argp, int);
+                std:;uint64_t number[100];
                 int j = 0;
                 do{
                     number[j] = (int_to_kprintf % 10);
@@ -137,4 +137,10 @@ void Terminal::term_print(char *string, ...)
     }
 
     va_end(argp);
+}
+
+void Terminal::change_colors(std::uint32_t foreground, std::uint32_t background)
+{
+    terminal_foreground = foreground;
+    terminal_background = background;
 }

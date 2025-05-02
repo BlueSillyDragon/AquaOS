@@ -81,5 +81,5 @@ void uefi_allocate_pages(UINTN pages, uint64_t *memory)
                 bdebug(ERROR, "Page not found!\r\n");
                 break;
         }
-    } else bdebug(INFO, "Allocated %d pages! Starting address: 0x%x\r\n", pages, *memory);
+    }
 }

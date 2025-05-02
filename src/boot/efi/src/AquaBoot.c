@@ -118,12 +118,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         boot_info.framebuffer = framebuffer;
         boot_info.pitch = framebuffer->pitch;
 
-
-        bdebug(INFO, "Address of Boot Info0x%x\r\n", &boot_info);
-
         bdebug(INFO, "Setting up page tables...\r\n");
-
-        bdebug(INFO, "Framebuffer Address: 0x%x\r\n", boot_info.framebuffer);
 
         pagemap_t pagemap;
         pagemap = new_pagemap();
@@ -132,11 +127,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
         map_pages(pagemap, 0x70000000, 0x70000000, 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
-        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0xf000);
-
-        bdebug(INFO, "Framebuffer: %x\r\n", boot_info.framebuffer->base);
-
-        bdebug(INFO, "Pitch %d\r\n", boot_info.pitch);
+        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x10000);
 
         memory_map = get_memory_map(map_key);
 
@@ -156,7 +147,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         kernel_main(&boot_info);
 
-        asm volatile("mov $1, %eax");   // For debugging purposes, tells us if we didn't jump to kernel entry
         hlt();    // We can't call bpanic anymore, so just halt the system
     }
 

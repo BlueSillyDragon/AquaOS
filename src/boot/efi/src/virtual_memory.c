@@ -58,15 +58,12 @@ uint64_t *get_lower_level(uint64_t *current_level, uint64_t entry, uint64_t leve
     }
     else
     {
-        //bdebug(INFO, "Entry not found, creating new entry...\r\n");
         uint64_t next_lvl_addr;
         uefi_allocate_pages(1, &next_lvl_addr);
         memset((uint64_t *)next_lvl_addr, 0x0, 0x1000);
         next_level = (uint64_t *)next_lvl_addr;
-        //bdebug(INFO, "Level %d allocated at 0x%x\r\n", level, next_level);
         current_level[entry] = pte_new((size_t)next_level, PT_TABLE_FLAGS);
-        if(PT_IS_TABLE(current_level[entry])) bdebug(INFO, "Entry created!\r\n");
-        else bdebug(ERROR, "Sad face =(\r\n");
+        if(!PT_IS_TABLE(current_level[entry])) bdebug(INFO, "Failed to create new page entry!\r\n");
     }
     return (uint64_t *)next_level;
 }
@@ -85,15 +82,6 @@ void map_page(pagemap_t pagemap, uint64_t virt_address, uint64_t phys_address, u
     
     uint64_t *pml4, *pml3, *pml2, *pml1;
     pml4 = (uint64_t *)pagemap.top_level;
-
-    /*bdebug(INFO, "PML4 address 0x%x\r\n", pagemap.top_level);
-
-    bdebug(INFO, "PML4 Index of Virtual Address 0x%x is: %d\r\n", virt_address, pml4_idx);
-    bdebug(INFO, "PDPT Index of Virtual Address 0x%x is: %d\r\n", virt_address, pml3_idx);
-    bdebug(INFO, "PD Index of Virtual Address 0x%x is: %d\r\n", virt_address, pml2_idx);
-    bdebug(INFO, "PT Index of Virtual Address 0x%x is: %d\r\n", virt_address, pml1_idx);
-
-    bdebug(INFO, "Mapping Physical Address 0x%x to Virtual Address 0x%x\r\n", phys_address, virt_address);*/
 
     pml3 = get_lower_level(pml4, pml4_idx, 3);
     pml2 = get_lower_level(pml3, pml3_idx, 2);

@@ -2,24 +2,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdarg>
-#include <inc/kprint.hpp>
+#include <inc/terminal.hpp>
 #include "inc/krnl_colors.hpp"
-#include "inc/sys/gdt.hpp"
-#include "inc/sys/idt.hpp"
+#include "inc/logo.hpp"
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
 #define KERNEL_PATCH 0
 
-std::uint64_t HHDM;
-
-extern int cursor_x;
-extern int cursor_y;
-
-extern std::uint32_t terminal_foreground;
-extern std::uint32_t terminal_background;
-
-extern aquaboot_framebuffer *framebuffer;
+std::uint32_t boot_major;
+std::uint32_t boot_minor;
+std::uint32_t boot_patch;
 
 extern "C" {
 
@@ -80,86 +73,17 @@ void hlt()
     asm volatile(" hlt ");
 }
 
-void disable_interrupts()
-{
-    asm volatile(" cli ");
-}
-
-void enable_interrupts()
-{
-    asm volatile(" sti ");
-}
-
-static bool vectors[256];
-extern "C" void *isr_stub_table[];
-
-extern "C" void setIDT(std::uint16_t limit, std::uint64_t base);
-
-void idt_set_desc(std::uint8_t vector, void *isr, std::uint8_t flags, idt_entry_t *idt)
-{
-    idt_entry_t *descriptor = &idt[vector];
-
-    descriptor->isr_low = (std::uint64_t)isr;
-    descriptor->kernel_cs = 0x08;
-    descriptor->ist = 0;
-    descriptor->attributes = flags;
-    descriptor->isr_mid  = ((uint64_t)isr >> 16);
-    descriptor->isr_high = ((uint64_t)isr >> 32);
-    descriptor->reserved = 0;
-}
-
-void init_idt(uint64_t hhdm, idt_entry_t *idt)
-{
-    idtr_t idtr;
-    idtr.offset = (hhdm + (std::uint64_t) + &idt);
-    idtr.size = (std::uint16_t)sizeof(idt_entry_t) * 256 - 1;
-
-    for(std::uint8_t vector = 0; vector < 32; vector++)
-    {
-        idt_set_desc(vector, isr_stub_table[vector], 0x8e, idt);
-        vectors[vector] = true;
-    }
-    setIDT(idtr.size, idtr.offset);
-}
-
-extern "C" void int0(void);
-
 extern "C" void kernel_main (aquaboot_info *boot_info)
 {
-    boot_info->framebuffer->base = (boot_info->hhdm + boot_info->framebuffer->base);    // Make sure we have the correct address
-    framebuffer = boot_info->framebuffer;
-    std::uint64_t stuff = boot_info->framebuffer->base;
-    asm volatile("mov %0, %%rax" :: "a"(stuff));
-    
-    cursor_x = 0;
-    cursor_y = 0;
-    terminal_foreground = KRNL_WHITE;
-    terminal_background = KRNL_BLACK;
+    boot_major = boot_info->aquaboot_major;
+    boot_minor = boot_info->aquaboot_minor;
+    boot_patch = boot_info->aquaboot_patch;
 
-    display_logo();
+    Terminal kern_terminal(boot_info->framebuffer, KRNL_WHITE, KRNL_BLACK, boot_info->hhdm);
 
-    kprintf("\n\nBooted by AquaBoot Version %d.%d.%d\n",
-                                                                boot_info->aquaboot_major,
-                                                                boot_info->aquaboot_minor,
-                                                                boot_info->aquaboot_patch);
-    kprintf("\nAquaKernel Version %d.%d.%d\n", KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
+    kern_terminal.term_print(kernel_logo);
 
-    init_gdt(boot_info);
-
-    putchar('[', terminal_foreground, terminal_background);
-    cursor_x++;
-    terminal_foreground = KRNL_GREEN;
-    kprintf(" OK ");
-    terminal_foreground = KRNL_WHITE;
-    putchar(']', terminal_foreground, terminal_background);
-    cursor_x += 2;
-    kprintf("GDT Initialized!\n");
-
-    static idt_entry_t idt[256];
-
-    init_idt(0xffff800000000000, idt);
-
-    __asm__  ("div %0" :: "r"(0));
-
+    kern_terminal.term_print("\n\n\tBooted by AquaBoot Version %d.%d.%d\n", boot_major, boot_minor, boot_patch);
+    kern_terminal.term_print("\n\tAquaKernel Version %d.%d.%d\n", KERNEL_MAJOR, KERNEL_MINOR, KERNEL_PATCH);
     hlt();
 }

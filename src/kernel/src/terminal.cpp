@@ -1,42 +1,41 @@
-#include <aquaboot.h>
 #include <cstdint>
 #include <cstdarg>
-#include <inc/krnl_colors.hpp>
+#include <inc/terminal.hpp>
 #include <inc/krnl_font.hpp>
-#include <inc/logo.hpp>
-#include <inc/kprint.hpp>
 
-int cursor_x;
-int cursor_y;
+Terminal::Terminal(aquaboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm)
+{
+    terminal_fb->base = (hhdm + framebuffer->base);
+    terminal_fb->pitch = framebuffer->pitch;
+    terminal_foreground = foreground;
+    terminal_background = background;
+    cursor_x = 0;
+    cursor_y = 0;
 
-std::uint32_t terminal_foreground;
-std::uint32_t terminal_background;
-
-aquaboot_framebuffer *framebuffer;
-
-static void plot_pixels (int y, int x, uint32_t pixel) {
-    std::uint64_t stuff = framebuffer->base;
-
-    std::uint32_t *fb_ptr = (uint32_t *)stuff;
-    fb_ptr[x * (framebuffer->pitch / 4) + y] = pixel;
 }
 
-void putchar (unsigned short int c, uint32_t fg, uint32_t bg) {
+void Terminal::plot_pixels(std::uint64_t y, std::uint64_t x, uint32_t pixel)
+{
+    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminal_fb->base);
+    fb_ptr[x * (terminal_fb->pitch / 4) + y] = pixel;
+}
+
+void Terminal::term_putchar(unsigned short int c)
+{
     uint32_t pixel;
     
     for (int cy = 0; cy < 16; cy++) {
         for (int cx = 0; cx < 8; cx++) {
-            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? fg : bg;
+            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? terminal_foreground : terminal_background;
 
             // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
             plot_pixels((cx + (cursor_x * 8)), (cy + (cursor_y * 16)), pixel);
         }
     }
-
 }
 
-void kprintf(char* string, ...) {
-
+void Terminal::term_print(char *string, ...)
+{
     std::va_list argp;
     va_start(argp, string);
 
@@ -66,7 +65,7 @@ void kprintf(char* string, ...) {
             i++;
 
             if (string[i] == '%') {
-                putchar('%', terminal_foreground, terminal_background);
+                term_putchar('%');
                 cursor_x++;
                 continue;
             }
@@ -74,7 +73,7 @@ void kprintf(char* string, ...) {
             else if (string[i] == 'c')
             {
                 char char_to_kprintf = va_arg(argp, int);
-                putchar(char_to_kprintf, terminal_foreground, terminal_background);
+                term_putchar(char_to_kprintf);
                 cursor_x++;
                 continue;
             }
@@ -92,7 +91,7 @@ void kprintf(char* string, ...) {
                 j--;
 
                 for (; j>=0; j--) {
-                    putchar((number[j] + '0'), terminal_foreground, terminal_background);
+                    term_putchar((number[j] + '0'));
                     cursor_x++;
                 }
 
@@ -114,9 +113,9 @@ void kprintf(char* string, ...) {
                 for (; j>=0; j--) {
                     if(number[j] > 0x9)
                     {
-                        putchar((number[j] + ('0' + 7)), terminal_foreground, terminal_background);
+                        term_putchar((number[j] + ('0' + 7)));
                     }
-                    else putchar((number[j] + '0'), terminal_foreground, terminal_background);
+                    else term_putchar((number[j] + '0'));
                     cursor_x++;
                 }
 
@@ -124,7 +123,7 @@ void kprintf(char* string, ...) {
             }
 
             else {
-                putchar('0', terminal_foreground, terminal_background);
+                term_putchar('0');
                 cursor_x++;
                 continue;
             }
@@ -132,27 +131,10 @@ void kprintf(char* string, ...) {
             i--;
         }
 
-        putchar(string[i], terminal_foreground, terminal_background);
+        term_putchar(string[i]);
 
         cursor_x++;
     }
 
     va_end(argp);
-
-}
-
-void display_logo() {
-    kprintf(kernel_logo);
-}
-
-void kerror(char * string)
-{
-    putchar('[', terminal_foreground, terminal_background);
-    cursor_x++;
-    terminal_foreground = KRNL_RED;
-    kprintf("Error");
-    terminal_foreground = KRNL_WHITE;
-    putchar(']', terminal_foreground, terminal_background);
-    cursor_x += 2;
-    kprintf(string);
 }

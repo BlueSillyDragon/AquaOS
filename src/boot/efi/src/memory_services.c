@@ -8,6 +8,39 @@
 #include "inc/print.h"
 #include "inc/memory_services.h"
 
+void *memset(void *s, int c, size_t n) {
+    uint8_t *p = (uint8_t *)s;
+
+    for (size_t i = 0; i < n; i++) {
+        p[i] = (uint8_t)c;
+    }
+
+    return s;
+}
+
+void *memcpy(void *dest, const void *src, size_t n) {
+    asm volatile(
+        "rep movsb"
+        : "=D"(dest), "=S"(src), "=c"(n)
+        : "D"(dest), "S"(src), "c"(n)
+        : "memory"
+    );
+    return dest;
+}
+
+int memcmp(const void *s1, const void *s2, size_t n) {
+    const uint8_t *p1 = (const uint8_t *)s1;
+    const uint8_t *p2 = (const uint8_t *)s2;
+
+    for (size_t i = 0; i < n; i++) {
+        if (p1[i] != p2[i]) {
+            return p1[i] < p2[i] ? -1 : 1;
+        }
+    }
+
+    return 0;
+}
+
 EFI_MEMORY_DESCRIPTOR* get_memory_map(uint64_t mapk)
 {
     EFI_STATUS status;

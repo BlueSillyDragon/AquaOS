@@ -29,16 +29,6 @@
 #define PD_ID(virt) (((virt) >> 21) & 0x1FF)
 #define PT_ID(virt) (((virt) >> 12) & 0x1FF)
 
-void *memset(void *s, int c, size_t n) {
-    uint8_t *p = (uint8_t *)s;
-
-    for (size_t i = 0; i < n; i++) {
-        p[i] = (uint8_t)c;
-    }
-
-    return s;
-}
-
 pagemap_t new_pagemap()
 {
     pagemap_t pagemap;

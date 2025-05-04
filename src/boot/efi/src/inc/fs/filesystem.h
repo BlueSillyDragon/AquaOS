@@ -13,4 +13,4 @@ void read_block(uint64_t block, void *buffer);
 struct ext2_inode* read_inode(uint32_t inode);
 
 // Recursively reads inodes until it gets to the last item in the filepath. Returns the index of the last inode in inode_id
-int read_filepath(char *filepath, int filepath_size, int *inode_id);
+int read_filepath(char *filepath, uint64_t filepath_size, int *inode_id);

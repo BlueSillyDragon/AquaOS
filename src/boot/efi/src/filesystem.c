@@ -4,6 +4,7 @@
 #include "inc/fs/ext2.h"
 #include "inc/fs/filesystem.h"
 #include "inc/disk_services.h"
+#include "inc/memory_services.h"
 #include "inc/log.h"
 #include "inc/print.h"
 #include <stdint.h>
@@ -150,125 +151,77 @@ struct ext2_inode* read_inode(uint32_t inode)
     return ino;
 }
 
-// TODO: Clean this function up at some point
-
-int read_filepath(char *filepath, int filepath_size, int *inode_id)
+int read_filepath(char *filepath, uint64_t filepath_size, int *inode_id)
 {
-    struct ext2_inode *current_inode;
-    struct ext2_dir_entry *current_entry;
+    struct ext2_inode *ino;
+    struct ext2_dir_entry *dir;
+    BOOLEAN should_cont = TRUE; // Tells us to continue searching
+    BOOLEAN found;           // Tells us we found the next file
+    uint64_t name_size;   // Amount of characters in the current name
+    char *name;           // Name of the current directory entry
+    uint64_t filepath_offs = 1;     // Offset in the filepath to start looking
+    char block_buf[block_size];
+    int i = 0;
 
-    int next_name_offset = 1; // Accounting for the fact that a filepath starts with /
+    uefi_allocate_pool(256, &name);     // Allocate memory for the name
+    memset(name, 0, 256);
 
-    BOOLEAN same_char = FALSE; // Used during the recursive lookup
-    BOOLEAN still_looking = TRUE;
-
-    // First thing we need to do is read the root inode (which is always inode 2)
-
-    if (filepath[0] != '/')
+    if(filepath[0] != '/')
     {
-        bdebug(ERROR, "AquaOS filepaths must start with '/'!\r\n");
-        bdebug(INFO, "first char of filepath is: %c\r\n", filepath[0]);
+        bdebug(ERROR, "Need to start with '/'");
+    }
+
+    ino = read_inode(EXT2_ROOT_INO);
+
+    cont:
+    read_block(ino->i_block[0], block_buf);
+    memset(name, 0, 256);
+    name_size = 0;
+    // Grab the next name
+    for(int i = 0; filepath[filepath_offs] != '/'; i++)
+    {
+        name[i] = filepath[filepath_offs];
+        bdebug(NONE, "%c", name[i]);
+        filepath_offs++;
+        name_size++;
+
+        if(filepath_offs == filepath_size)
+        {
+            bdebug(INFO, "Reached end of filepath\r\n");
+            should_cont = FALSE;
+            break;
+        }
+    }
+    bdebug(NONE, "\r\n");
+    filepath_offs++;    // Skip over the next /
+
+    i = 0;
+
+    while(!(i >= block_size))
+    {
+        if(memcmp(&block_buf[i], &name[0], name_size) == 0)
+        {
+            bdebug(INFO, "Found next file!\r\n");
+            found = TRUE;
+            break;
+        } else found = FALSE;
+        i++;
+    }
+
+    if (!found)
+    {
         return FALSE;
     }
+    bdebug(INFO, "I is %d\r\n", i);
+    dir = &block_buf[i - 8];
+    
+    ino = read_inode(dir->inode);
 
-    current_inode = read_inode(EXT2_ROOT_INO);
-
-    if ((current_inode->i_mode & 0xF000) == EXT2_S_IFDIR)
+    if(!should_cont && found)
     {
-        bdebug(INFO, "Is directory! Continuing recursive lookup...\r\n");
+        *inode_id = dir->inode;
+        return TRUE;
     }
-
-    uint8_t block_buf[block_size];
-
-    bdebug(INFO, "current inode block 0 id: %d\r\n", current_inode->i_block[0]);
-
-    bdebug(NONE, "\r\n");
-
-    // Start looking into directories
-
-    char next_dir_name[255];
-
-    while(still_looking)
-    {
-        bdebug(INFO, "%d\r\n", current_inode->i_block[0]);
-        read_block(current_inode->i_block[0], block_buf);
-
-        bdebug(INFO, "%d\r\n", filepath_size);
-
-        for(int i = 0; i < block_size; i++)
-        {
-            bdebug(NONE, "%c", block_buf[i]);
-        }
-
-        bdebug(NONE, "\r\n");
-
-        for (int i = 0; i < filepath_size; i++)
-        {
-            if(filepath[next_name_offset] == '/')
-            {
-                next_name_offset++;
-                bdebug(INFO, "/ found, exiting...\r\n");
-                break;
-            }
-
-            if (next_name_offset == filepath_size)
-            {
-                still_looking = FALSE;
-                break;
-            }
-
-            next_dir_name[i] = filepath[next_name_offset];
-            next_name_offset++;
-            bdebug(NONE, "%c", next_dir_name[i]);
-        }
-
-        bdebug(NONE, "\r\n");
-
-        int name_idx = 0;
-        int name_offset = 0; // Need this to calculate the starting byte of the directory entry
-
-        for(int i = 0; i < block_size; i++)
-        {
-            if(block_buf[i] == next_dir_name[name_idx])
-            {
-                same_char = TRUE;
-                name_idx++;
-
-                if(name_idx == 256)
-                {
-                    name_offset = i;
-                    bdebug(INFO, "Name offset: %d\r\n", name_offset);
-                    break;
-                }
-            }
-
-            else
-            {
-                same_char = FALSE;
-                name_idx = 0;
-            }
-        }
-
-        if (same_char)
-        {
-            bdebug(INFO, "Found!\r\n");
-            current_entry = &block_buf[name_offset - 263];
-            bdebug(INFO, "Current Entry inode: %d\r\n", current_entry->inode);
-            if (next_name_offset == filepath_size)
-            {
-                *inode_id = current_entry->inode;
-                return TRUE;
-            }
-        }
-
-        else
-        {
-            bdebug(INFO, "Not found! Ending recursive lookup...\r\n");
-            return FALSE;
-        }
-
-        current_inode = read_inode(current_entry->inode);
-        
-    }
-
+    else if (should_cont) goto cont;
+    else return FALSE;
 }

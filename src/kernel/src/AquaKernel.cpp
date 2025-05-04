@@ -78,9 +78,7 @@ void hlt()
 }
 
 Gdt gdt;
-gdtr_t gdtr;
 
-idtr_t idtr;
 Idt idt;
 
 extern "C" void divInt(void);

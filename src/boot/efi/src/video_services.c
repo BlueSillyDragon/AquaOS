@@ -42,11 +42,11 @@ aquaboot_framebuffer *init_video_services() {
 
     // Set video mode and get frame buffer
 
-    sta = gop->SetMode(gop, 12);
+    sta = gop->SetMode(gop, 10);
 
     if (EFI_ERROR(sta)) {
         print(u"Could not set video mode! Defaulting to native...\r\n");
-        sta = gop->SetMode(gop, nativeMode);
+        sta = gop->SetMode(gop, 0);
         if (EFI_ERROR(sta)) {
             print(u"Failure to set video mode! Halting...\r\n");
             asm volatile ( "hlt" );

@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include "inc/boot_protocol/aquaboot.h"
+#include "efi/efishell.h"
 #include "inc/fs/ext2.h"
 #include "inc/memory_services.h"
 #include "inc/print.h"
@@ -30,16 +31,6 @@ EFI_MEMORY_DESCRIPTOR *memory_map;
 uint64_t map_key;
 
 uint64_t hhdm_offset = 0xFFFF800000000000;
-
-void *memcpy(void *dest, const void *src, size_t n) {
-    asm volatile(
-        "rep movsb"
-        : "=D"(dest), "=S"(src), "=c"(n)
-        : "D"(dest), "S"(src), "c"(n)
-        : "memory"
-    );
-    return dest;
-}
 
 void hlt()
 {
@@ -123,11 +114,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         pagemap_t pagemap;
         pagemap = new_pagemap();
 
+        uint64_t aligned_pagemap = (pagemap.top_level & ~0xfff);
+
         bdebug(INFO, "Identity Mapping...\r\n");
 
         map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
-        map_pages(pagemap, 0x70000000, 0x70000000, 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
+        map_pages(pagemap, (pagemap.top_level & ~0xfffffff), (pagemap.top_level & ~0xfffffff), 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
         map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x10000);
+
+        bdebug(INFO, "Page maps located around 0x%x\r\n", (pagemap.top_level & ~0xfffffff));
 
         memory_map = get_memory_map(map_key);
 

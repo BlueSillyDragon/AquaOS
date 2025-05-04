@@ -6,6 +6,8 @@
 
 EFI_SERIAL_IO_PROTOCOL *serial;
 
+uint8_t serial_supported;
+
 void init_serial_services()
 {
     EFI_STATUS sta;
@@ -15,7 +17,8 @@ void init_serial_services()
 
     if (EFI_ERROR(sta)) {
         print(u"Unable to locate Serial I/O Protocol!\r\n");
-    }
+        serial_supported = 0;
+    } else serial_supported = 1;
 }
 
 void ser_putchar(char c)
@@ -30,6 +33,8 @@ void ser_putchar(char c)
 
 void bdebug(enum DEBUG_TYPE type, char* string, ...)
 {
+    if (!serial_supported) {goto not_supported;} 
+
     UINTN bufSize;
 
     switch (type)
@@ -122,4 +127,6 @@ void bdebug(enum DEBUG_TYPE type, char* string, ...)
     }
 
     va_end(args);
+
+    not_supported:
 }

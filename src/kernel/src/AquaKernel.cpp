@@ -16,6 +16,8 @@ std::uint32_t boot_major;
 std::uint32_t boot_minor;
 std::uint32_t boot_patch;
 
+Terminal kern_terminal;
+
 extern "C" {
 
     void *memcpy(void *__restrict dest, const void *__restrict src, std::size_t n) {
@@ -89,7 +91,7 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     boot_minor = boot_info->aquaboot_minor;
     boot_patch = boot_info->aquaboot_patch;
 
-    Terminal kern_terminal(boot_info->framebuffer, KRNL_WHITE, KRNL_BLACK, boot_info->hhdm);
+    kern_terminal.term_init(boot_info->framebuffer, KRNL_WHITE, KRNL_BLACK, boot_info->hhdm);
 
     kern_terminal.term_print(kernel_logo);
 
@@ -104,21 +106,11 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
 
     gdt.loadGdt();
 
-    kern_terminal.term_print("[");
-    kern_terminal.change_colors(KRNL_GREEN, KRNL_BLACK);
-    kern_terminal.term_print(" OK ");
-    kern_terminal.change_colors(KRNL_WHITE, KRNL_BLACK);
-    kern_terminal.term_print("]");
-    kern_terminal.term_print(" GDT Initialized!\n");
+    kern_terminal.ksuccess("GDT Initialized!\n");
 
     idt.initIdt();
 
-    kern_terminal.term_print("[");
-    kern_terminal.change_colors(KRNL_GREEN, KRNL_BLACK);
-    kern_terminal.term_print(" OK ");
-    kern_terminal.change_colors(KRNL_WHITE, KRNL_BLACK);
-    kern_terminal.term_print("]");
-    kern_terminal.term_print(" IDT Initialized!\n");
+    kern_terminal.ksuccess("IDT Initialized!\n");
 
     hlt();
 }

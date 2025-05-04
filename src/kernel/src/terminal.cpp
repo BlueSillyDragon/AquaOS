@@ -2,22 +2,32 @@
 #include <cstdarg>
 #include <inc/terminal.hpp>
 #include <inc/krnl_font.hpp>
+#include <inc/krnl_colors.hpp>
 
-Terminal::Terminal(aquaboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm)
+Terminal::Terminal()
 {
-    terminal_fb->base = (hhdm + framebuffer->base);
-    terminal_fb->pitch = framebuffer->pitch;
+    terminal_fb.base = 0;
+    terminal_fb.pitch = 0;
+    terminal_foreground = 0;
+    terminal_background = 0;
+}
+
+void Terminal::term_init(aquaboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm)
+{
+    terminal_fb.base = (hhdm + framebuffer->base);
+    terminal_fb.pitch = framebuffer->pitch;
+    terminal_fb.horizontalRes = framebuffer->horizontalRes;
+    terminal_fb.verticalRes = framebuffer->verticalRes;
     terminal_foreground = foreground;
     terminal_background = background;
     cursor_x = 0;
     cursor_y = 0;
-
 }
 
 void Terminal::plot_pixels(std::uint64_t y, std::uint64_t x, uint32_t pixel)
 {
-    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminal_fb->base);
-    fb_ptr[x * (terminal_fb->pitch / 4) + y] = pixel;
+    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminal_fb.base);
+    fb_ptr[x * (terminal_fb.pitch / 4) + y] = pixel;
 }
 
 void Terminal::term_putchar(unsigned short int c)
@@ -137,6 +147,26 @@ void Terminal::term_print(char *string, ...)
     }
 
     va_end(argp);
+}
+
+void Terminal::kerror(char *string)
+{
+    term_print("[");
+    change_colors(KRNL_RED, KRNL_BLACK);
+    term_print(" Error ");
+    change_colors(KRNL_WHITE, KRNL_BLACK);
+    term_print("] ");
+    term_print(string);
+}
+
+void Terminal::ksuccess(char *string)
+{
+    term_print("[");
+    change_colors(KRNL_GREEN, KRNL_BLACK);
+    term_print(" OK ");
+    change_colors(KRNL_WHITE, KRNL_BLACK);
+    term_print("] ");
+    term_print(string);
 }
 
 void Terminal::change_colors(std::uint32_t foreground, std::uint32_t background)

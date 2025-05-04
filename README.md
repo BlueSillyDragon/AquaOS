@@ -145,6 +145,6 @@ Now when you run AquaOS, you should be booted into the kernel, and seeing a cool
 limine-efi as a UEFI library, and AquaBoot is the custom bootloader.
 
 ## License
-AquaOS is under an MIT License.
+AquaOS is under an GPLv3 License.
 
 BlueSillyDragon (c) 2023, 2025

@@ -18,6 +18,8 @@ std::uint32_t boot_patch;
 
 Terminal kern_terminal;
 
+aquaboot_memory_descriptor *memory_map;
+
 extern "C" {
 
     void *memcpy(void *__restrict dest, const void *__restrict src, std::size_t n) {
@@ -89,6 +91,8 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     boot_minor = boot_info->aquaboot_minor;
     boot_patch = boot_info->aquaboot_patch;
 
+    memory_map = boot_info->memory_map;
+
     kern_terminal.term_init(boot_info->framebuffer, KRNL_WHITE, KRNL_BLACK, boot_info->hhdm);
 
     kern_terminal.term_print(kernel_logo);
@@ -109,6 +113,21 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     idt.initIdt();
 
     kern_terminal.ksuccess("IDT Initialized!\n");
+
+    std::uint64_t nop = 0;
+
+    aquaboot_memory_descriptor *desc;
+
+    for(uint64_t i = 0; i < boot_info->mem_map_entries; i++)
+    {
+        desc = (aquaboot_memory_descriptor *)((uint8_t *)memory_map + (i * boot_info->desc_size));
+        if (desc->type == AQUAOS_FREE_MEMORY)
+        {
+            nop += desc->num_of_pages;
+        }
+    }
+
+    kern_terminal.term_print("AquaOS has %dGB of memory available", ((nop * 4) / 1024) / 1024);
 
     hlt();
 }

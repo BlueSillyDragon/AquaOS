@@ -82,21 +82,21 @@ void Terminal::term_print(char *string, ...)
 
             else if (string[i] == 'c')
             {
-                char char_to_kprintf = va_arg(argp, int);
-                term_putchar(char_to_kprintf);
+                char char_to_print = va_arg(argp, int);
+                term_putchar(char_to_print);
                 cursor_x++;
                 continue;
             }
 
             else if (string[i] == 'd') {
-                std::uint64_t int_to_kprintf = va_arg(argp, int);
-                std:;uint64_t number[100];
+                std::uint64_t int_to_print = va_arg(argp, int);
+                std::uint64_t number[100];
                 int j = 0;
                 do{
-                    number[j] = (int_to_kprintf % 10);
-                    int_to_kprintf = (int_to_kprintf - int_to_kprintf % 10) / 10;
+                    number[j] = (int_to_print % 10);
+                    int_to_print = (int_to_print - int_to_print % 10) / 10;
                     j++;
-                } while (int_to_kprintf > 0);
+                } while (int_to_print > 0);
 
                 j--;
 
@@ -109,14 +109,14 @@ void Terminal::term_print(char *string, ...)
             }
             
             else if (string[i] == 'x') {
-                std::uint64_t int_to_kprintf = va_arg(argp, int);
+                std::uint64_t int_to_print = va_arg(argp, int);
                 std::uint64_t number[100];
-                std::uint64_t j = 0;
+                int j = 0;
                 do{
-                    number[j] = (int_to_kprintf % 16);
-                    int_to_kprintf = (int_to_kprintf - int_to_kprintf % 16) / 16;
+                    number[j] = (int_to_print % 16);
+                    int_to_print = (int_to_print - int_to_print % 16) / 16;
                     j++;
-                } while (int_to_kprintf > 0);
+                } while (int_to_print > 0);
 
                 j--;
 

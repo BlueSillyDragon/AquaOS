@@ -3,6 +3,14 @@
 
 #include <stdint.h>
 
+// Memory Descriptor Types
+typedef enum {
+    AQUAOS_RESERVED,
+    AQUAOS_RUNTIME_SERVICES,
+    AQUAOS_ACPI_RECLAIM,
+    AQUAOS_FREE_MEMORY
+} AQUABOOT_MEM_TYPE;
+
 typedef struct {
     uint64_t base;
     uint64_t size;
@@ -29,7 +37,9 @@ typedef struct
 
     uint64_t hhdm;  // Pass the Higher-Half Direct Map to the Kernel
 
-    uint32_t pitch;
-
     aquaboot_framebuffer *framebuffer;  // Obviously we need to pass the framebuffer to the Kernel
+
+    uint64_t mem_map_entries;
+    uint64_t desc_size;
+    aquaboot_memory_descriptor *memory_map;
 } aquaboot_info;

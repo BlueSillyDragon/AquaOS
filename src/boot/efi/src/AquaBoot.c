@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include "inc/boot_protocol/aquaboot.h"
+#include "efi/efidef.h"
 #include "efi/efishell.h"
 #include "inc/fs/ext2.h"
 #include "inc/memory_services.h"
@@ -80,7 +81,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
     if (found_kernel)
     {
-        print(u"AquaOS kernel found! Inode: %d, Loading into memory...\r\n", kernel_inode_num);
+        print(u"AquaOS kernel found! Loading into memory...\r\n", kernel_inode_num);
 
         if(!is_elf(kernel_inode_num))
         {
@@ -107,16 +108,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         framebuffer = init_video_services();
 
         boot_info.framebuffer = framebuffer;
-        boot_info.pitch = framebuffer->pitch;
 
         bdebug(INFO, "Setting up page tables...\r\n");
 
         pagemap_t pagemap;
         pagemap = new_pagemap();
 
-        uint64_t aligned_pagemap = (pagemap.top_level & ~0xfff);
-
-        bdebug(INFO, "Identity Mapping...\r\n");
+        bdebug(INFO, "Mapping Pages...\r\n");
 
         map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
         map_pages(pagemap, (pagemap.top_level & ~0xfffffff), (pagemap.top_level & ~0xfffffff), 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
@@ -124,15 +122,24 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         bdebug(INFO, "Page maps located around 0x%x\r\n", (pagemap.top_level & ~0xfffffff));
 
-        memory_map = get_memory_map(map_key);
+        memory_map = get_memory_map(pagemap);
 
-        SystemTable->BootServices->ExitBootServices(ImageHandle, map_key);
+        boot_info.memory_map = memory_map;
+
+        map_key = get_map_key();
+
+        boot_info.mem_map_entries = get_entry_count();
+        boot_info.desc_size = get_desc_size();
+
+        set_memory_types(boot_info.memory_map);
+
+        status = SystemTable->BootServices->ExitBootServices(imgH, map_key);
 
         if (EFI_ERROR(status))
         {
             bdebug(ERROR, "Problem occured exiting boot services! Aborting...\r\n");
             bpanic();
-        } else {bdebug(INFO, "Successfully exited boot services!\r\n");}
+        }
 
         extern void loadPageTables(uint64_t pml4);
 
@@ -145,7 +152,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         hlt();    // We can't call bpanic anymore, so just halt the system
     }
 
-    // TODO: Check Boot Medium (eg. USB) for 
+    // TODO: Check Boot Medium (eg. USB) for kernel
 
     else
     {

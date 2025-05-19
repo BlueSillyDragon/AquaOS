@@ -9,6 +9,7 @@ class Pmm
         Pmm();
         void initPmm(aquaboot_memory_descriptor *memory_map, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm);
         uint64_t *palloc();
+        void pfree(uint64_t *page);
     private:
         std::uint64_t *head;    // Head of the linked list (first free page)
 };

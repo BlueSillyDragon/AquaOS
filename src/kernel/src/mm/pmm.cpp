@@ -70,3 +70,9 @@ uint64_t *Pmm::palloc()
 
     return page;
 }
+
+void Pmm::pfree(uint64_t *page)
+{
+    *page = reinterpret_cast<uint64_t>(head);   // The newly freed page now points to the old head
+    head = page;    // Head now points to newly freed page
+}

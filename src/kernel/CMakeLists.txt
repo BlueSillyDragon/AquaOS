@@ -1,4 +1,13 @@
-set(SOURCES "src/AquaKernel.cpp" "src/terminal.cpp" "src/sys/gdt.cpp" "src/sys/idt.cpp" "src/sys/interrupts.cpp" "src/sys/gdt.asm" "src/sys/idt.asm" "src/sys/isr.asm")
+set(SOURCES "src/AquaKernel.cpp"
+"src/terminal.cpp"
+"src/tinyubsan.cpp"
+"src/sys/gdt.cpp"
+"src/sys/idt.cpp"
+"src/sys/interrupts.cpp"
+"src/sys/gdt.asm"
+"src/sys/idt.asm"
+"src/sys/isr.asm"
+"src/mm/pmm.cpp")
 
 add_executable(aquakernel.elf ${SOURCES})
 
@@ -11,7 +20,9 @@ target_include_directories(
 
 target_compile_options(aquakernel.elf
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-g>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fsanitize=undefined>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-builtin-declaration-mismatch>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-target x86_64-unknown-none>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-O2>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wextra>

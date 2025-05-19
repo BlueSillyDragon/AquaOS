@@ -136,13 +136,10 @@ sudo cp /path/to/kernel /mnt/Aqua64/System
 sudo umount /mnt
 sudo losetup -d /dev/loop0
 ```
-Now when you run AquaOS, you should be booted into the kernel, and seeing a cool ASCII art logo!
-> [!NOTE]
-> If the Bootloader claims the kernel cannot be found, first confirm that the kernel is in the correct location.
-> If it is, you can use debugfs to check the inode number of the kernel and directories (If it's an absurdly high number, that's probably why)
+Now when you run AquaOS, you should be booted into the kernel.
 
 ## Technologies
-limine-efi as a UEFI library, and AquaBoot is the custom bootloader.
+limine-efi by mintsuki as a UEFI library, uses tinyubsan by rdmsr, and AquaBoot is the custom bootloader.
 
 ## License
 AquaOS is under an GPLv3 License.

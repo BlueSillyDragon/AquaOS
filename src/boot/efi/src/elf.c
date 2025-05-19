@@ -1,6 +1,7 @@
 #include <efi.h>
 #include <stdint.h>
 #include "inc/elf.h"
+#include "efi/efidef.h"
 #include "inc/fs/ext2.h"
 #include "inc/log.h"
 #include "inc/fs/filesystem.h"
@@ -59,7 +60,7 @@ uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
     ino_phdr = &block_buf[ino_hdr->p_table_offs];
 
     // Load into memory
-    uefi_allocate_pages(8, &phys_addr);
+    uefi_allocate_pages(8, &phys_addr, EfiReservedMemoryType);
 
     char *pt = (uint64_t *)phys_addr;
 

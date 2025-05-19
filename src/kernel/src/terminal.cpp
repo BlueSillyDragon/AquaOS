@@ -89,7 +89,7 @@ void Terminal::term_print(char *string, ...)
             }
 
             else if (string[i] == 'd') {
-                std::uint64_t int_to_print = va_arg(argp, int);
+                std::uint64_t int_to_print = va_arg(argp, uint64_t);
                 std::uint64_t number[100];
                 int j = 0;
                 do{
@@ -109,10 +109,10 @@ void Terminal::term_print(char *string, ...)
             }
             
             else if (string[i] == 'x') {
-                std::uint64_t int_to_print = va_arg(argp, int);
+                std::uint64_t int_to_print = va_arg(argp, uint64_t);
                 std::uint64_t number[100];
                 int j = 0;
-                do{
+                do {
                     number[j] = (int_to_print % 16);
                     int_to_print = (int_to_print - int_to_print % 16) / 16;
                     j++;
@@ -129,6 +129,18 @@ void Terminal::term_print(char *string, ...)
                     cursor_x++;
                 }
 
+                continue;
+            }
+
+            else if (string[i] == 's') {
+                char *string_to_print = va_arg(argp, char*);
+
+                while (*string_to_print != '\0')
+                {
+                    term_putchar(*string_to_print);
+                    string_to_print++;
+                    cursor_x++;
+                }
                 continue;
             }
 
@@ -166,6 +178,31 @@ void Terminal::ksuccess(char *string)
     term_print(" OK ");
     change_colors(KRNL_WHITE, KRNL_BLACK);
     term_print("] ");
+    term_print(string);
+}
+
+void Terminal::kinfo(INFO_TYPE type, char *string)
+{
+    term_print("[ ");
+    switch (type)
+    {
+        case PMM:
+            change_colors(KRNL_BLUE, KRNL_BLACK);
+            term_print("PMM");
+            break;
+        case VMM:
+            change_colors(KRNL_PINK, KRNL_BLACK);
+            term_print("VMM");
+            break;
+        case SCHEDULER:
+            change_colors(KRNL_GREEN, KRNL_BLACK);
+            term_print("SCHEDULER");
+            break;
+        default:
+        term_print(" ");
+    }
+    change_colors(KRNL_WHITE, KRNL_BLACK);
+    term_print(" ] ");
     term_print(string);
 }
 

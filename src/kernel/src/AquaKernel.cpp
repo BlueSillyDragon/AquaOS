@@ -7,6 +7,7 @@
 #include <inc/terminal.hpp>
 #include <inc/sys/gdt.hpp>
 #include <inc/sys/idt.hpp>
+#include <inc/mm/pmm.hpp>
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
@@ -83,6 +84,8 @@ Gdt gdt;
 
 Idt idt;
 
+Pmm pmm;
+
 extern "C" void divInt(void);
 
 extern "C" void kernel_main (aquaboot_info *boot_info)
@@ -127,7 +130,21 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
         }
     }
 
-    kern_terminal.term_print("AquaOS has %dGB of memory available", ((nop * 4) / 1024) / 1024);
+    if (((nop * 4) / 1024) < 400)   // Not all of RAM is usable, give some account for this
+    {
+        kern_terminal.kerror("Please run AquaOS with atleast 512MB of RAM!\n");
+        hlt();
+    }
+
+    kern_terminal.term_print("AquaOS has %dGB of memory available\n", ((nop * 4) / 1024) / 1024);
+
+    pmm.initPmm(memory_map, boot_info->mem_map_entries, boot_info->desc_size, boot_info->hhdm);
+
+    uint64_t *test = pmm.palloc();
+
+    *test = 64;
+
+    kern_terminal.term_print("uint64_t allocated at 0x%x, holds the value %d\n", test, *test);
 
     hlt();
 }

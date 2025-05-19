@@ -97,7 +97,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         print(u"Allocated Memory for kernel! Loading...\r\n");
 
         aquaboot_info boot_info;
-        uefi_allocate_pages(1, &boot_info);
+        uefi_allocate_pages(1, &boot_info, EfiReservedMemoryType);
         boot_info.aquaboot_major = AQUABOOT_MAJOR;
         boot_info.aquaboot_minor = AQUABOOT_MINOR;
         boot_info.aquaboot_patch = AQUABOOT_PATCH;
@@ -118,7 +118,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         map_pages(pagemap, hhdm_offset, 0x0, 0x3, 0x100000000);
         map_pages(pagemap, (pagemap.top_level & ~0xfffffff), (pagemap.top_level & ~0xfffffff), 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
-        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x10000);
+        map_pages(pagemap, kernel_vaddr, kernel_paddr, 0x3, 0x100000);
 
         bdebug(INFO, "Page maps located around 0x%x\r\n", (pagemap.top_level & ~0xfffffff));
 

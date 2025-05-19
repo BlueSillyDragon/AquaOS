@@ -100,7 +100,7 @@ EFI_MEMORY_DESCRIPTOR* get_memory_map(pagemap_t pagemap)
 
     // Allocate memory for MemoryMap
     void *buffer;
-    status = sysT->BootServices->AllocatePool(EfiLoaderData, (memory_map_size + (2 * descriptor_size)), &buffer);
+    status = sysT->BootServices->AllocatePool(EfiReservedMemoryType, (memory_map_size + (2 * descriptor_size)), &buffer);
     if (status != EFI_SUCCESS)
     {
         bdebug(ERROR, "Could not allocate memory for MemoryMap!\r\n");
@@ -167,10 +167,10 @@ void uefi_allocate_pool(UINTN size, void **buffer)
     } else bdebug(INFO, "Allocated %d bytes! Starting address: 0x%x\r\n", size, buffer);
 }
 
-void uefi_allocate_pages(UINTN pages, uint64_t *memory)
+void uefi_allocate_pages(UINTN pages, uint64_t *memory, EFI_MEMORY_TYPE mem_type)
 {
     EFI_STATUS status;
-    status = sysT->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, pages, memory);
+    status = sysT->BootServices->AllocatePages(AllocateAnyPages, mem_type, pages, memory);
 
     if(status != EFI_SUCCESS)
     {

@@ -1,6 +1,7 @@
 #include <efi.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "efi/efidef.h"
 #include "inc/log.h"
 #include "inc/memory_services.h"
 #include "inc/virtual_memory.h"
@@ -33,7 +34,7 @@ pagemap_t new_pagemap()
 {
     pagemap_t pagemap;
     pagemap.levels = 4;
-    uefi_allocate_pages(1, &pagemap.top_level);
+    uefi_allocate_pages(1, &pagemap.top_level, EfiReservedMemoryType);
     memset((uint64_t *)pagemap.top_level, 0x0, 0x1000);
 
     return pagemap;
@@ -49,7 +50,7 @@ uint64_t *get_lower_level(uint64_t *current_level, uint64_t entry, uint64_t leve
     else
     {
         uint64_t next_lvl_addr;
-        uefi_allocate_pages(1, &next_lvl_addr);
+        uefi_allocate_pages(1, &next_lvl_addr, EfiReservedMemoryType);
         memset((uint64_t *)next_lvl_addr, 0x0, 0x1000);
         next_level = (uint64_t *)next_lvl_addr;
         current_level[entry] = pte_new((size_t)next_level, PT_TABLE_FLAGS);

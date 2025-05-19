@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "boot_protocol/aquaboot.h"
+#include "efi/efidef.h"
 #include "virtual_memory.h"
 
 typedef struct
@@ -31,4 +32,4 @@ uint64_t get_desc_size();
 
 // Allocates size amount of bytes and returns the memory allocated in buffer
 void uefi_allocate_pool(UINTN size, void **buffer);
-void uefi_allocate_pages(UINTN pages, uint64_t *memory);
+void uefi_allocate_pages(UINTN pages, uint64_t *memory, EFI_MEMORY_TYPE mem_type);

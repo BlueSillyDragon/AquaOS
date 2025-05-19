@@ -54,7 +54,7 @@ aquaboot_framebuffer *init_video_services() {
     }
 
     uint64_t fb_ptr;
-    uefi_allocate_pages(1, &fb_ptr);
+    uefi_allocate_pages(1, &fb_ptr, EfiReservedMemoryType);
     fb = (uint64_t *)fb_ptr;
 
     fb->base = gop->Mode->FrameBufferBase;

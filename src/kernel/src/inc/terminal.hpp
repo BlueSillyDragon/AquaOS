@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <cstdarg>
 
+enum INFO_TYPE {PMM, VMM, SCHEDULER};
+
 class Terminal
 {
     public:
@@ -12,6 +14,7 @@ class Terminal
         void term_print(char *string, ...);
         void kerror(char *string);
         void ksuccess(char *string);
+        void kinfo(INFO_TYPE type, char *string);   // Labels the string for different parts of the kernel (eg. [PMM])
         void change_colors(std::uint32_t foreground, std::uint32_t background);
     private:
         std::uint32_t terminal_foreground;

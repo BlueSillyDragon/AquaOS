@@ -42,4 +42,6 @@ typedef struct
     uint64_t mem_map_entries;
     uint64_t desc_size;
     aquaboot_memory_descriptor *memory_map;
+
+    uint64_t kernel_paddr;  // Pass the physical address of the kernel so it can remap itself
 } aquaboot_info;

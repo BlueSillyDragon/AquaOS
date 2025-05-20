@@ -1,4 +1,5 @@
 set(SOURCES "src/AquaKernel.cpp"
+"src/mem.cpp"
 "src/terminal.cpp"
 "src/tinyubsan.cpp"
 "src/sys/gdt.cpp"

@@ -104,6 +104,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
         boot_info.hhdm = hhdm_offset;
 
+        boot_info.kernel_paddr = kernel_paddr;
+
         aquaboot_framebuffer *framebuffer;
         framebuffer = init_video_services();
 

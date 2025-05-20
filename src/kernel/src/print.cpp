@@ -1,42 +1,38 @@
 #include <cstdint>
 #include <cstdarg>
-#include <inc/terminal.hpp>
+#include <inc/print.hpp>
 #include <inc/krnl_font.hpp>
 #include <inc/krnl_colors.hpp>
 
-Terminal::Terminal()
+std::uint32_t foreground = KRNL_WHITE;
+std::uint32_t background = KRNL_BLACK;
+std::uint64_t cursor_x = 0;
+std::uint64_t cursor_y = 0;
+aquaboot_framebuffer framebuffer;
+
+void term_init(aquaboot_framebuffer *fb, std::uint32_t fg, std::uint32_t bg, std::uint64_t hhdm)
 {
-    terminal_fb.base = 0;
-    terminal_fb.pitch = 0;
-    terminal_foreground = 0;
-    terminal_background = 0;
+    framebuffer.base = (hhdm + fb->base);
+    framebuffer.pitch = fb->pitch;
+    framebuffer.horizontalRes = fb->horizontalRes;
+    framebuffer.verticalRes = fb->verticalRes;
+    foreground = fg;
+    background = bg;
 }
 
-void Terminal::term_init(aquaboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm)
+void plot_pixels(std::uint64_t y, std::uint64_t x, uint32_t pixel)
 {
-    terminal_fb.base = (hhdm + framebuffer->base);
-    terminal_fb.pitch = framebuffer->pitch;
-    terminal_fb.horizontalRes = framebuffer->horizontalRes;
-    terminal_fb.verticalRes = framebuffer->verticalRes;
-    terminal_foreground = foreground;
-    terminal_background = background;
-    cursor_x = 0;
-    cursor_y = 0;
+    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(framebuffer.base);
+    fb_ptr[x * (framebuffer.pitch / 4) + y] = pixel;
 }
 
-void Terminal::plot_pixels(std::uint64_t y, std::uint64_t x, uint32_t pixel)
-{
-    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminal_fb.base);
-    fb_ptr[x * (terminal_fb.pitch / 4) + y] = pixel;
-}
-
-void Terminal::term_putchar(unsigned short int c)
+void putchar(char c)
 {
     uint32_t pixel;
     
     for (int cy = 0; cy < 16; cy++) {
         for (int cx = 0; cx < 8; cx++) {
-            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? terminal_foreground : terminal_background;
+            pixel = (kernel_font[(c * 16) + cy] >> (7 - cx)) & 1 ? foreground : background;
 
             // Offset the cx and cy by x and y so that x and y are in characters instead of pixels
             plot_pixels((cx + (cursor_x * 8)), (cy + (cursor_y * 16)), pixel);
@@ -44,7 +40,7 @@ void Terminal::term_putchar(unsigned short int c)
     }
 }
 
-void Terminal::term_print(char *string, ...)
+void kprintf(char *string, ...)
 {
     std::va_list argp;
     va_start(argp, string);
@@ -75,7 +71,7 @@ void Terminal::term_print(char *string, ...)
             i++;
 
             if (string[i] == '%') {
-                term_putchar('%');
+                putchar('%');
                 cursor_x++;
                 continue;
             }
@@ -83,7 +79,7 @@ void Terminal::term_print(char *string, ...)
             else if (string[i] == 'c')
             {
                 char char_to_print = va_arg(argp, int);
-                term_putchar(char_to_print);
+                putchar(char_to_print);
                 cursor_x++;
                 continue;
             }
@@ -101,7 +97,7 @@ void Terminal::term_print(char *string, ...)
                 j--;
 
                 for (; j>=0; j--) {
-                    term_putchar((number[j] + '0'));
+                    putchar((number[j] + '0'));
                     cursor_x++;
                 }
 
@@ -123,9 +119,9 @@ void Terminal::term_print(char *string, ...)
                 for (; j>=0; j--) {
                     if(number[j] > 0x9)
                     {
-                        term_putchar((number[j] + ('0' + 7)));
+                        putchar((number[j] + ('0' + 7)));
                     }
-                    else term_putchar((number[j] + '0'));
+                    else putchar((number[j] + '0'));
                     cursor_x++;
                 }
 
@@ -137,7 +133,7 @@ void Terminal::term_print(char *string, ...)
 
                 while (*string_to_print != '\0')
                 {
-                    term_putchar(*string_to_print);
+                    putchar(*string_to_print);
                     string_to_print++;
                     cursor_x++;
                 }
@@ -145,7 +141,7 @@ void Terminal::term_print(char *string, ...)
             }
 
             else {
-                term_putchar('0');
+                putchar('0');
                 cursor_x++;
                 continue;
             }
@@ -153,7 +149,7 @@ void Terminal::term_print(char *string, ...)
             i--;
         }
 
-        term_putchar(string[i]);
+        putchar(string[i]);
 
         cursor_x++;
     }
@@ -161,53 +157,53 @@ void Terminal::term_print(char *string, ...)
     va_end(argp);
 }
 
-void Terminal::kerror(char *string)
+void kerror(char *string)
 {
-    term_print("[");
+    kprintf("[");
     change_colors(KRNL_RED, KRNL_BLACK);
-    term_print(" Error ");
+    kprintf(" Error ");
     change_colors(KRNL_WHITE, KRNL_BLACK);
-    term_print("] ");
-    term_print(string);
+    kprintf("] ");
+    kprintf(string);
 }
 
-void Terminal::ksuccess(char *string)
+void ksuccess(char *string)
 {
-    term_print("[");
+    kprintf("[");
     change_colors(KRNL_GREEN, KRNL_BLACK);
-    term_print(" OK ");
+    kprintf(" OK ");
     change_colors(KRNL_WHITE, KRNL_BLACK);
-    term_print("] ");
-    term_print(string);
+    kprintf("] ");
+    kprintf(string);
 }
 
-void Terminal::kinfo(INFO_TYPE type, char *string)
+void kinfo(INFO_TYPE type, char *string)
 {
-    term_print("[ ");
+    kprintf("[ ");
     switch (type)
     {
         case PMM:
             change_colors(KRNL_BLUE, KRNL_BLACK);
-            term_print("PMM");
+            kprintf("PMM");
             break;
         case VMM:
             change_colors(KRNL_PINK, KRNL_BLACK);
-            term_print("VMM");
+            kprintf("VMM");
             break;
         case SCHEDULER:
             change_colors(KRNL_GREEN, KRNL_BLACK);
-            term_print("SCHEDULER");
+            kprintf("SCHEDULER");
             break;
         default:
-        term_print(" ");
+        kprintf(" ");
     }
     change_colors(KRNL_WHITE, KRNL_BLACK);
-    term_print(" ] ");
-    term_print(string);
+    kprintf(" ] ");
+    kprintf(string);
 }
 
-void Terminal::change_colors(std::uint32_t foreground, std::uint32_t background)
+void change_colors(std::uint32_t fg, std::uint32_t bg)
 {
-    terminal_foreground = foreground;
-    terminal_background = background;
+    foreground = fg;
+    foreground = bg;
 }

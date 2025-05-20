@@ -3,13 +3,6 @@
 #include <aquaboot.h>
 #include <cstdint>
 
-class Pmm
-{
-    public:
-        Pmm();
-        void initPmm(aquaboot_memory_descriptor *memory_map, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm);
-        uint64_t *palloc();
-        void pfree(uint64_t *page);
-    private:
-        std::uint64_t *head;    // Head of the linked list (first free page)
-};
+void init_pmm(aquaboot_memory_descriptor *memory_map, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm);
+uint64_t *pmm_alloc();
+void pmm_free(uint64_t *page);

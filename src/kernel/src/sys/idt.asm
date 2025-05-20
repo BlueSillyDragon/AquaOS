@@ -11,9 +11,3 @@ loadIdtAsm:
     lidt [idtr]
     sti
     ret
-
-global divInt
-
-divInt:
-    mov rbx, 0x0
-    div rbx

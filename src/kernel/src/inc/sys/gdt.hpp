@@ -23,11 +23,4 @@ typedef struct
     std::uint64_t user_data;
 } gdt_t;
 
-class Gdt
-{   
-    public:
-        Gdt();      // This will set the segments of the GDT, as well as the Base and Limit of the GDTR
-        void loadGdt();
-        gdtr_t GDTR;
-        gdt_t GDTDescs;
-};
+void init_gdt();

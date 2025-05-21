@@ -8,6 +8,7 @@
 #include <inc/sys/gdt.hpp>
 #include <inc/sys/idt.hpp>
 #include <inc/mm/pmm.hpp>
+#include <inc/mm/vmm.hpp>
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
@@ -32,12 +33,7 @@ extern "C" void kernel_main (aquaboot_info *boot_info)
     init_gdt();
     init_idt();
     init_pmm(boot_info->memory_map, boot_info->mem_map_entries, boot_info->desc_size, boot_info->hhdm);
-
-    uint64_t *test = pmm_alloc();
-
-    *test = 64;
-
-    kern_terminal.term_print("uint64_t allocated at 0x%x with the value %d", test, *test);
+    init_vmm(boot_info->hhdm, boot_info->kernel_paddr);
 
     hlt();
 }

@@ -8,7 +8,8 @@ set(SOURCES "src/AquaKernel.cpp"
 "src/sys/gdt.asm"
 "src/sys/idt.asm"
 "src/sys/isr.asm"
-"src/mm/pmm.cpp")
+"src/mm/pmm.cpp"
+"src/mm/vmm.cpp")
 
 add_executable(aquakernel.elf ${SOURCES})
 

@@ -5,6 +5,8 @@
 extern "C" void loadGdtAsm(std::uint16_t limit, std::uint64_t base);
 extern "C" void reloadSegs(void);
 
+extern Terminal kern_terminal;
+
 gdtr_t gdtr;
 gdt_t gdt;
 
@@ -25,5 +27,5 @@ void init_gdt()
     loadGdtAsm(gdtr.limit, gdtr.base);
     reloadSegs();
 
-    ksuccess("GDT Initialized!\n");
+    kern_terminal.ksuccess("GDT Initialized!\n");
 }

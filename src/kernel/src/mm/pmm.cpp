@@ -4,11 +4,13 @@
 #include <inc/print.hpp>
 #include <inc/mm/pmm.hpp>
 
+extern "C" Terminal kern_terminal;
+
 uint64_t *head;
 
 void init_pmm(aquaboot_memory_descriptor *memory_map, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm)
 {
-    kinfo(PMM, "Initialzing PMM...\n");
+    kern_terminal.kinfo(PMM, "Initialzing PMM...\n");
 
     uint64_t *next;
     uint64_t nop = 0;
@@ -50,22 +52,22 @@ void init_pmm(aquaboot_memory_descriptor *memory_map, std::uint64_t entries, std
     link_end:
     if (((nop * 4) / 1024) < 400)   // Not all of RAM is usable, give some account for this
     {
-        kerror("Please run AquaOS with atleast 512MB of RAM!\n");
+        kern_terminal.kerror("Please run AquaOS with atleast 512MB of RAM!\n");
         __asm__ volatile (" hlt ");
     }
 
-    kinfo(PMM, "AquaOS has ");
-    kprintf("%dGB of memory available\n", ((nop * 4) / 1024) / 1024);
-    kinfo(PMM, "Usable Pages: ");
-    kprintf("%d\n", nop);
+    kern_terminal.kinfo(PMM, "AquaOS has ");
+    kern_terminal.term_print("%dGB of memory available\n", ((nop * 4) / 1024) / 1024);
+    kern_terminal.kinfo(PMM, "Usable Pages: ");
+    kern_terminal.term_print("%d\n", nop);
 }
 
 uint64_t *pmm_alloc()
 {
     uint64_t *page;     // The page we're returning
     uint64_t *next;     // Used for getting the next page
-    kinfo(PMM, "Allocated a free page at ");
-    kprintf("0x%x\n", head);
+    kern_terminal.kinfo(PMM, "Allocated a free page at ");
+    kern_terminal.term_print("0x%x\n", head);
 
     // Remove page from free list
     next = head;

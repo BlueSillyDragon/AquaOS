@@ -1,4 +1,4 @@
-#include "inc/terminal.hpp"
+#include "inc/print.hpp"
 #include <stdint.h>
 
 extern "C" Terminal kern_terminal;

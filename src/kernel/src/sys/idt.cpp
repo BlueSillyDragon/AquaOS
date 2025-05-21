@@ -4,6 +4,8 @@
 
 extern "C" void loadIdtAsm(std::uint16_t limit, std::uint64_t base);
 
+extern Terminal kern_terminal;
+
 extern void* isr_stub_table[];
 
 idtr_t idtr;
@@ -33,5 +35,5 @@ void init_idt()
 
     loadIdtAsm(idtr.limit, idtr.base);
 
-    ksuccess("IDT Initialized!\n");
+    kern_terminal.ksuccess("IDT Initialized!\n");
 }

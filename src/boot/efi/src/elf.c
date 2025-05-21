@@ -48,6 +48,7 @@ uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
     struct elf_header *ino_hdr;
     struct program_header *ino_phdr;
     char block_buf[4096];
+    char indir_buf[4096];
     uint64_t phys_addr;
 
     ino = read_inode(ino_num);
@@ -60,20 +61,40 @@ uint64_t load_elf(uint64_t ino_num, uint64_t *entry_offs)
     ino_phdr = &block_buf[ino_hdr->p_table_offs];
 
     // Load into memory
-    uefi_allocate_pages(8, &phys_addr, EfiReservedMemoryType);
+    uefi_allocate_pages(256, &phys_addr, EfiReservedMemoryType);    // Should probably un-hardcode this at some point
 
     char *pt = (uint64_t *)phys_addr;
 
-    for(int i = 1; i < 12; i++)
+    for(int i = 1; i < 13; i++)
     {
         ino = read_inode(ino_num);  // Read again just to insure that nothing has changed
+
         if(ino->i_block[i] == 0){break;}
-        read_block(ino->i_block[i], block_buf); // Just reading second block for now
-        for(uint64_t i = 0; i < 4096; i++)
+
+        if(i < 12)
         {
-            pt[i] = block_buf[i];
+            read_block(ino->i_block[i], block_buf);
+            for(uint64_t i = 0; i < 4096; i++)
+            {
+                pt[i] = block_buf[i];
+            }
+            pt += 0x1000;
         }
-        pt += 0x1000;
+
+        else if (i == 12)
+        {
+            read_block(ino->i_block[i], block_buf);
+            for (uint64_t j = 0; j < 128; j++)
+            {
+                read_block(block_buf[j], indir_buf);
+                if(block_buf[j] == 0){break;}
+                for (uint64_t k = 0; k < 4096; k++)
+                {
+                    pt[k] = indir_buf[k];
+                }
+                pt += 0x1000;
+            }
+        }
     }
 
     return phys_addr;

@@ -5,7 +5,7 @@
 typedef struct 
 {
     uint64_t levels;
-    uint64_t *top_level;
+    uint64_t top_level;
 } pagemap_t;
 
 void init_vmm(std::uint64_t hhdm, std::uint64_t kernel_paddr);

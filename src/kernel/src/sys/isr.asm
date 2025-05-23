@@ -1,11 +1,19 @@
 %macro isr_err_stub 1
 isr_stub_%+%1:
+    push rax
+    push rbx
+    push rcx
+    push rdx
     call interrupt_handler
     iretq
 %endmacro
 
 %macro isr_no_err_stub 1
 isr_stub_%+%1:
+    push rax
+    push rbx
+    push rcx
+    push rdx
     call interrupt_handler
     iretq
 %endmacro

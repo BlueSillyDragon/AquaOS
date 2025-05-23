@@ -8,5 +8,7 @@ src/boot/efi/limine-efi
 src/boot/efi/freestanding-headers
 src/boot/efi/bin-x86_64
 src/boot/efi/obj-x86_64
+src/kernel/freestnd-c-hdrs
+src/kernel/freestnd-cxx-hdrs
 build
 .cache

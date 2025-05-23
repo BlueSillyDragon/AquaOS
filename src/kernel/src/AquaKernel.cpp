@@ -23,7 +23,8 @@ Terminal kern_terminal;
 
 extern "C" void kernel_main (aquaboot_info *boot_info)
 {
-    kern_terminal.term_init(boot_info->framebuffer, KRNL_WHITE, KRNL_BLACK, boot_info->hhdm);
+    kern_terminal.term_init(boot_info->framebuffer, KRNL_WHITE, KRNL_DARK_GREY, boot_info->hhdm);
+    kern_terminal.clear_screen();
 
     kern_terminal.term_print(kernel_logo);
 

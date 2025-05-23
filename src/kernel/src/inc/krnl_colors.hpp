@@ -1,5 +1,7 @@
 #define KRNL_BLACK (uint32_t)0x000000
 #define KRNL_WHITE (uint32_t)0xFFFFFF
+#define KRNL_DARK_GREY (uint32_t)0x23272E
+#define KRNL_LIGHT_GREY (uint32_t)0x919DB3
 #define KRNL_RED (uint32_t)0xFF3333
 #define KRNL_ORANGE (uint32_t)0xFFB233
 #define KRNL_YELLOW (uint32_t)0xFFF333

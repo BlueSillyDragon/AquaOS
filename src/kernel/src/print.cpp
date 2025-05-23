@@ -164,9 +164,9 @@ void Terminal::term_print(char *string, ...)
 void Terminal::kerror(char *string)
 {
     term_print("[");
-    change_colors(KRNL_RED, KRNL_BLACK);
+    change_colors(KRNL_RED, KRNL_DARK_GREY);
     term_print(" Error ");
-    change_colors(KRNL_WHITE, KRNL_BLACK);
+    change_colors(KRNL_WHITE, KRNL_DARK_GREY);
     term_print("] ");
     term_print(string);
 }
@@ -174,9 +174,9 @@ void Terminal::kerror(char *string)
 void Terminal::ksuccess(char *string)
 {
     term_print("[");
-    change_colors(KRNL_GREEN, KRNL_BLACK);
+    change_colors(KRNL_GREEN, KRNL_DARK_GREY);
     term_print(" OK ");
-    change_colors(KRNL_WHITE, KRNL_BLACK);
+    change_colors(KRNL_WHITE, KRNL_DARK_GREY);
     term_print("] ");
     term_print(string);
 }
@@ -187,21 +187,21 @@ void Terminal::kinfo(INFO_TYPE type, char *string)
     switch (type)
     {
         case PMM:
-            change_colors(KRNL_BLUE, KRNL_BLACK);
+            change_colors(KRNL_BLUE, KRNL_DARK_GREY);
             term_print("PMM");
             break;
         case VMM:
-            change_colors(KRNL_PINK, KRNL_BLACK);
+            change_colors(KRNL_PINK, KRNL_DARK_GREY);
             term_print("VMM");
             break;
         case SCHEDULER:
-            change_colors(KRNL_GREEN, KRNL_BLACK);
+            change_colors(KRNL_GREEN, KRNL_DARK_GREY);
             term_print("SCHEDULER");
             break;
         default:
         term_print(" ");
     }
-    change_colors(KRNL_WHITE, KRNL_BLACK);
+    change_colors(KRNL_WHITE, KRNL_DARK_GREY);
     term_print(" ] ");
     term_print(string);
 }
@@ -210,4 +210,15 @@ void Terminal::change_colors(std::uint32_t foreground, std::uint32_t background)
 {
     terminal_foreground = foreground;
     terminal_background = background;
+}
+
+void Terminal::clear_screen()
+{
+    for (uint64_t i = 0; i < terminal_fb.horizontalRes; i++)
+    {
+        for (uint64_t j = 0; j < terminal_fb.verticalRes; j++)
+        {
+            plot_pixels(i, j, terminal_background);
+        }
+    }
 }

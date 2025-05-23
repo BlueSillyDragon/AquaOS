@@ -16,6 +16,7 @@ class Terminal
         void ksuccess(char *string);
         void kinfo(INFO_TYPE type, char *string);   // Labels the string for different parts of the kernel (eg. [PMM])
         void change_colors(std::uint32_t foreground, std::uint32_t background);
+        void clear_screen();
     private:
         std::uint32_t terminal_foreground;
         std::uint32_t terminal_background;

@@ -1,17 +1,18 @@
 set(SOURCES
-"src/AquaBoot.c"
-"src/video_services.c"
-"src/disk_services.c"
-"src/print.c" "src/filesystem.c"
-"src/log.c"
-"src/memory_services.c"
-"src/virtual_memory.c"
-"src/acpi.c"
-"src/elf.c"
-"src/paging.asm")
-add_executable(AquaBoot ${SOURCES})
+"snowboot.c"
+"video_services.c"
+"disk_services.c"
+"print.c"
+"filesystem.c"
+"log.c"
+"memory_services.c"
+"virtual_memory.c"
+"acpi.c"
+"elf.c"
+"paging.asm")
+add_executable(snowboot ${SOURCES})
 
-target_compile_options(AquaBoot
+target_compile_options(snowboot
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-g>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-target x86_64-unknown-none>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-pipe>
@@ -28,7 +29,7 @@ PRIVATE $<$<COMPILE_LANGUAGE:C>:-fPIE>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi/limine-efi/inc>
-PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi/src>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-isystem ../src/boot/efi/freestanding-headers>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-m64>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-march=x86-64>
@@ -40,7 +41,7 @@ PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-MMD>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-MP>)
 
-target_link_options(AquaBoot
+target_link_options(snowboot
 PRIVATE -fuse-ld=lld
 PRIVATE -Wl,-m,elf_x86_64
 PRIVATE -nostdlib
@@ -52,17 +53,17 @@ PRIVATE -Wl,-T,../src/boot/efi/limine-efi/src/elf_x86_64_efi.lds
 PRIVATE ../src/boot/efi/limine-efi/src/crt0-efi-x86_64.S.o
 PRIVATE ../src/boot/efi/limine-efi/src/reloc_x86_64.c.o)
 
-add_custom_target(AquaBoot.efi ALL
-COMMAND llvm-objcopy -O binary AquaBoot AquaBoot.efi
-COMMAND dd if=/dev/zero of=AquaBoot.efi bs=4096 count=0 seek=$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096 )) 2>/dev/null
-DEPENDS AquaBoot)
+add_custom_target(snowboot.efi ALL
+COMMAND llvm-objcopy -O binary snowboot snowboot.efi
+COMMAND dd if=/dev/zero of=snowboot.efi bs=4096 count=0 seek=$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096 )) 2>/dev/null
+DEPENDS snowboot)
 
-add_custom_target(AquaOS.img ALL
+add_custom_target(SnowOS.img ALL
 COMMAND echo "Generating image file..."
-COMMAND dd if=/dev/zero of=AquaOS.img bs=1048576 count=128
-COMMAND mkfs.fat -F 32 -n "AquaOS" AquaOS.img
-COMMAND mmd -i AquaOS.img ::/EFI
-COMMAND mmd -i AquaOS.img ::/EFI/BOOT
-COMMAND mcopy -i AquaOS.img AquaBoot.efi ::/EFI/BOOT/BOOTX64.EFI
+COMMAND dd if=/dev/zero of=SnowOS.img bs=1048576 count=128
+COMMAND mkfs.fat -F 32 -n "ESP" SnowOS.img
+COMMAND mmd -i SnowOS.img ::/EFI
+COMMAND mmd -i SnowOS.img ::/EFI/BOOT
+COMMAND mcopy -i SnowOS.img snowboot.efi ::/EFI/BOOT/BOOTX64.EFI
 COMMAND echo "Finished Build!"
-DEPENDS AquaBoot.efi)
+DEPENDS snowboot.efi)

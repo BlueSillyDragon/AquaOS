@@ -1,26 +1,28 @@
-set(SOURCES "src/AquaKernel.cpp"
-"src/mem.cpp"
-"src/print.cpp"
-"src/tinyubsan.cpp"
-"src/sys/gdt.cpp"
-"src/sys/idt.cpp"
-"src/sys/interrupts.cpp"
-"src/sys/gdt.asm"
-"src/sys/idt.asm"
-"src/sys/isr.asm"
-"src/mm/pmm.cpp"
-"src/mm/vmm.cpp")
+set(SOURCES "kernel.cpp"
+"misc/mem.cpp"
+"io/terminal.cpp"
+"io/kprintf.cpp"
+"misc/tinyubsan.cpp"
+"sys/gdt.cpp"
+"sys/idt.cpp"
+"sys/interrupts.cpp"
+"sys/gdt.asm"
+"sys/idt.asm"
+"sys/isr.asm"
+"mm/pmm.cpp"
+"mm/vmm.cpp")
 
-add_executable(aquakernel.elf ${SOURCES})
+add_executable(yuki.elf ${SOURCES})
 
 target_include_directories(
-    aquakernel.elf
+    yuki.elf
     PRIVATE freestnd-c-hdrs/x86_64/include
     PRIVATE freestnd-cxx-hdrs/x86_64/include
-    private ../boot/efi/src/inc/boot_protocol
+    PRIVATE ../boot/efi/inc/boot_protocol
+    PRIVATE ../kernel
 )
 
-target_compile_options(aquakernel.elf
+target_compile_options(yuki.elf
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fsanitize=undefined>
@@ -47,7 +49,7 @@ PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=kernel>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MMD>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MP>)
 
-target_link_options(aquakernel.elf
+target_link_options(yuki.elf
 PRIVATE -Wl,-m,elf_x86_64
 PRIVATE -Wl,--build-id=none
 PRIVATE -nostdlib

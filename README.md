@@ -1,31 +1,30 @@
-# AquaOS
-![aquaos-high-resolution-logo](https://github.com/user-attachments/assets/5438a573-6d78-4a0d-bb0a-c9aa12c1e15f)
+# SnowOS
 
-AquaOS is a hobby operating system built from scratch for x86, written in C++.
+SnowOS is a microkernel-based hobby operating system built from scratch in C++ targeted at the x86 architecture.
 
-## How to Build and Run AquaOS
+## How to Build and Run SnowOS
 
 ### Step 1: Clone repository
 
 If you don't already have the source code, you'll have to clone it using the following commands:
 ```
-$ git clone https://github.com/BlueSillyDragon/AquaOS.git
-$ cd AquaOS
+$ git clone https://github.com/BlueSillyDragon/SnowOS.git
+$ cd SnowOS
 ```
 
 ### Step 2: Install Dependencies
 
-You'll need to install the needed tools to be able to build AquaOS if you don't have them installed already.
+You'll need to install the needed tools to be able to build SnowOS if you don't have them installed already.
 ```
 $ sudo apt install cmake clang ninja-build lld llvm
 ```
-Also install qemu and ovmf for running AquaOS, you can skip this if you're going to use a different VM though (eg. VirtualBox)
+Also install qemu and ovmf for running SnowOS, you can skip this if you're going to use a different VM though (eg. VirtualBox)
 > [!WARNING]
-> I can't guarantee that AquaOS will run on VirtualBox, but feel free to try
+> I can't guarantee that SnowOS will run on VirtualBox, but feel free to try
 
 ### Step 3: Run get-deps and build Limine-Efi
 
-AquaOS uses the Limine-Efi library for it's bootloader, hence, you will need to build it.
+SnowOS uses the Limine-Efi library for it's bootloader, hence, you will need to build it.
 First go to the src dir of the efi bootloader
 ```
 $ cd src/boot/efi
@@ -65,16 +64,16 @@ $ ninja
 ```
 Now you'll probably see something like this:
 ```
-$ FAILED: src/boot/efi/CMakeFiles/AquaBoot.efi /home/user/Desktop/AquaOS/build/src/boot/efi/CMakeFiles/AquaBoot.efi 
-$ cd /home/user/Desktop/AquaOS/build/src/boot/efi && llvm-objcopy -O binary AquaBoot AquaBoot.efi && dd if=/dev/zero of=AquaBoot.efi bs=4096 count=0 seek=$ ( ( ( $ ( wc -c < AquaBoot.efi ) + 4095 ) / 4096 ) ) 2>/dev/null
+$ FAILED: src/boot/efi/CMakeFiles/snowboot.efi /home/user/Desktop/SnowOS/build/src/boot/efi/CMakeFiles/snowboot.efi 
+$ cd /home/user/Desktop/SnowOS/build/src/boot/efi && llvm-objcopy -O binary snowboot snowboot.efi && dd if=/dev/zero of=snowboot.efi bs=4096 count=0 seek=$ ( ( ( $ ( wc -c < snowboot.efi ) + 4095 ) / 4096 ) ) 2>/dev/null
 $ /bin/sh: 1: Syntax error: "(" unexpected
 $ ninja: build stopped: subcommand failed.
 ```
 Don't panic, for some reason the spacing on the last command is messed up, you can just fix it manually.
 First open build.ninja in whatever code editor you use. Then go to line 172.
-Go near the end and delete everything after "seek=" and replace it with this "$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096)) 2>/dev/null" should look like this after you're done.
+Go near the end and delete everything after "seek=" and replace it with this "$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096)) 2>/dev/null" should look like this after you're done.
 ```
-...seek=$$(( ($$(wc -c < AquaBoot.efi) + 4095) / 4096)) 2>/dev/null
+...seek=$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096)) 2>/dev/null
 ```
 
 Now save and run ninja again, if everything goes well, you should see something like this.
@@ -88,39 +87,40 @@ $ mkfs.fat 4.2 (2021-01-31)
 $ Finished Build!
 ```
 
-### Step 6: Run AquaOS
+### Step 6: Run SnowOS
 
-Now all you have to do is run AquaOS under QEMU (or your VM of choice, just remember that you need to configure the VM settings to use UEFI).
+Now all you have to do is run SnowOS under QEMU (or your VM of choice, just remember that you need to configure the VM settings to use UEFI).
 Cd to the directory the .img file is in (if you're not in the build directory already for some reason, cd there first)
 ```
 $ cd src/boot/efi
 ```
 Now all you gotta do is run qemu with the command below
 ```
-$ qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -serial stdio -hda AquaOS.img
+$ qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -serial stdio -hda SnowOS.img
 ```
-And presto! You should be in AquaOS now! you should be seeing something like this.
+And presto! You should be in SnowOS now! you should be seeing something like this.
 ```
-AquaBoot version 0.1.0
+SnowBoot version 0.1.0
 Initializing Serial Services...
 Initializing Disk Services...
 Initializing FileSystem Services...
-the AquaOS Kernel must be located on an Ext2 Partition!
+the SnowOS Kernel must be located on an Ext2 Partition!
 ```
-Congratulations! You have succesfully built and ran AquaOS!
+Congratulations! You have succesfully built and ran SnowOS!
 
-However, you would probably like to be able to boot into the kernel. AquaBoot can't boot off of boot medium yet (gotta add that). This is simple enough.
+However, you would probably like to be able to boot into the kernel. SnowBoot can't load the kernel off a FAT FS yet (gotta add that). This is simple enough.
 
 ### Step 7: Booting into kernel
 
 You can use anything that can be partitioned, like an .img, I'll be using a USB in my example.
 
 First, partition the device to have an ESP (EFI System Partition) and an Ext2 Partition. Now all you have to do is copy the bootloader file and kernel file
-to the proper locations. AquaBoot should be copied to EFI/BOOT/* and rename AquaBoot.efi to BOOTX64.EFI
+to the proper locations. SnowBoot should be copied to EFI/BOOT/* and rename SnowBoot.efi to BOOTX64.EFI
 > [!WARNING]
 > If you're trying to put this on real hardware, **PLEASE** make sure that you copy it to a different location.
-> I would recommend something like AquaOS/aquaboot.efi, and then add that to your boot options.
-Then copy AquaKernel to the Ext2 partition at /Aqua64/System/* make sure it's called aquakernel.elf
+> I would recommend something like SnowOS/snowboot.efi, and then add that to your boot options.
+
+Then copy Yuki (SnowOS' kernel) to the Ext2 partition at /Snow64/System/* make sure it's called yuki.elf
 
 Specifically, I have these commands in a .sh file to make my life easier (feel free to use it if you want)
 ```
@@ -131,17 +131,17 @@ sudo umount /mnt
 sudo losetup -d /dev/loop0
 sudo losetup /dev/loop0 /path/to/device/part2
 sudo mount /dev/loop0 /mnt
-sudo rm /mnt/Aqua64/System/aquakernel.elf
-sudo cp /path/to/kernel /mnt/Aqua64/System
+sudo rm /mnt/Snow64/System/yuki.elf
+sudo cp /path/to/kernel /mnt/Snow64/System
 sudo umount /mnt
 sudo losetup -d /dev/loop0
 ```
-Now when you run AquaOS, you should be booted into the kernel.
+Now when you run SnowOS, you should be booted into the kernel.
 
 ## Technologies
-limine-efi by mintsuki as a UEFI library, uses tinyubsan by rdmsr, and AquaBoot is the custom bootloader.
+limine-efi by mintsuki as a UEFI library, uses tinyubsan by rdmsr, and SnowBoot is the custom bootloader.
 
 ## License
-AquaOS is under an GPLv3 License.
+SnowOS is under an GPLv3 License.
 
 BlueSillyDragon (c) 2023, 2025

@@ -76,66 +76,19 @@ Go near the end and delete everything after "seek=" and replace it with this "$$
 ...seek=$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096)) 2>/dev/null
 ```
 
-Now save and run ninja again, if everything goes well, you should see something like this.
-```
-$ Generating image file...
-$ 128+0 records in
-$ 128+0 records out
-$ 134217728 bytes (134 MB, 128 MiB) copied, 0.0290467 s, 4.6 GB/s
-$ mkfs.fat: Warning: lowercase labels might not work properly on some systems
-$ mkfs.fat 4.2 (2021-01-31)
-$ Finished Build!
-```
+Now save and run ninja again.
 
 ### Step 6: Run SnowOS
 
-Now all you have to do is run SnowOS under QEMU (or your VM of choice, just remember that you need to configure the VM settings to use UEFI).
-Cd to the directory the .img file is in (if you're not in the build directory already for some reason, cd there first)
-```
-$ cd src/boot/efi
-```
-Now all you gotta do is run qemu with the command below
-```
-$ qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -serial stdio -hda SnowOS.img
-```
-And presto! You should be in SnowOS now! you should be seeing something like this.
-```
-SnowBoot version 0.1.0
-Initializing Serial Services...
-Initializing Disk Services...
-Initializing FileSystem Services...
-the SnowOS Kernel must be located on an Ext2 Partition!
-```
-Congratulations! You have succesfully built and ran SnowOS!
+Now all you have to do is build the image file and run SnowOS under QEMU (or your VM of choice, just remember that you need to configure the VM settings to use UEFI).
 
-However, you would probably like to be able to boot into the kernel. SnowBoot can't load the kernel off a FAT FS yet (gotta add that). This is simple enough.
-
-### Step 7: Booting into kernel
-
-You can use anything that can be partitioned, like an .img, I'll be using a USB in my example.
-
-First, partition the device to have an ESP (EFI System Partition) and an Ext2 Partition. Now all you have to do is copy the bootloader file and kernel file
-to the proper locations. SnowBoot should be copied to EFI/BOOT/* and rename SnowBoot.efi to BOOTX64.EFI
-> [!WARNING]
-> If you're trying to put this on real hardware, **PLEASE** make sure that you copy it to a different location.
-> I would recommend something like SnowOS/snowboot.efi, and then add that to your boot options.
-
-Then copy Yuki (SnowOS' kernel) to the Ext2 partition at /Snow64/System/* make sure it's called yuki.elf
-
-Specifically, I have these commands in a .sh file to make my life easier (feel free to use it if you want)
+Simply cd back into the root folder, and run image.sh
 ```
-sudo losetup --offset 1048576 --sizelimit 46934528 /dev/loop0 /path/to/device
-sudo mount /dev/loop0 /mnt
-sudo cp /path/to/bootloader /mnt/EFI/BOOT/BOOTX64.EFI
-sudo umount /mnt
-sudo losetup -d /dev/loop0
-sudo losetup /dev/loop0 /path/to/device/part2
-sudo mount /dev/loop0 /mnt
-sudo rm /mnt/Snow64/System/yuki.elf
-sudo cp /path/to/kernel /mnt/Snow64/System
-sudo umount /mnt
-sudo losetup -d /dev/loop0
+$ cd ../
+$ ./image.sh
 ```
+This should generate an image file called SnowOS.img, then you can just run it normallu (recommended command: qemu-system-x86_64 --enable-kvm -M q35 -m 4G -bios /usr/share/ovmf/OVMF.fd -serial stdio -hda SnowOS.img)
+
 Now when you run SnowOS, you should be booted into the kernel.
 
 ## Technologies

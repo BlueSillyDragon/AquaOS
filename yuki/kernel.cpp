@@ -34,7 +34,5 @@ extern "C" void kernelMain (snowboot_info *bootInfo)
     initIdt();
     initPmm(bootInfo->memoryMap, bootInfo->memMapEntries, bootInfo->descSize, bootInfo->hhdm);
 
-    uint64_t test = pmmAlloc();
-
     hlt();
 }

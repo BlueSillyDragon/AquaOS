@@ -57,13 +57,3 @@ add_custom_target(snowboot.efi ALL
 COMMAND llvm-objcopy -O binary snowboot snowboot.efi
 COMMAND dd if=/dev/zero of=snowboot.efi bs=4096 count=0 seek=$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096 )) 2>/dev/null
 DEPENDS snowboot)
-
-add_custom_target(SnowOS.img ALL
-COMMAND echo "Generating image file..."
-COMMAND dd if=/dev/zero of=SnowOS.img bs=1048576 count=128
-COMMAND mkfs.fat -F 32 -n "ESP" SnowOS.img
-COMMAND mmd -i SnowOS.img ::/EFI
-COMMAND mmd -i SnowOS.img ::/EFI/BOOT
-COMMAND mcopy -i SnowOS.img snowboot.efi ::/EFI/BOOT/BOOTX64.EFI
-COMMAND echo "Finished Build!"
-DEPENDS snowboot.efi)

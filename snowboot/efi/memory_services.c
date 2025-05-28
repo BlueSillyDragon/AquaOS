@@ -49,7 +49,7 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     return 0;
 }
 
-AQUABOOT_MEM_TYPE uefiTypeToNative(EFI_MEMORY_TYPE type)
+SNOWBOOT_MEM_TYPE uefiTypeToNative(EFI_MEMORY_TYPE type)
 {
     switch (type)
     {
@@ -62,21 +62,23 @@ AQUABOOT_MEM_TYPE uefiTypeToNative(EFI_MEMORY_TYPE type)
         case EfiPalCode:
         case EfiPersistentMemory:
         case EfiMaxMemoryType:
-            return AQUAOS_RESERVED;
+            return SNOWOS_RESERVED;
             break;
         case EfiLoaderCode:
         case EfiLoaderData:
         case EfiBootServicesCode:
         case EfiBootServicesData:
+            return SNOWOS_BOOT_RECLAIM;
+            break;
         case EfiConventionalMemory:
-            return AQUAOS_FREE_MEMORY;
+            return SNOWOS_FREE_MEMORY;
             break;
         case EfiRuntimeServicesCode:
         case EfiRuntimeServicesData:
-            return AQUAOS_RUNTIME_SERVICES;
+            return SNOWOS_RUNTIME_SERVICES;
             break;
         case EfiACPIReclaimMemory:
-            return AQUAOS_ACPI_RECLAIM;
+            return SNOWOS_ACPI_RECLAIM;
             break;
     }
 }
@@ -109,7 +111,7 @@ EFI_MEMORY_DESCRIPTOR* getMemoryMap(pagemap_t pagemap)
     memory_map = buffer;
 
     // Ensure that the Memory Map is identity mapped
-    mapPages(pagemap, ((uint64_t)memory_map & ~0xfff), ((uint64_t)memory_map & ~0xfff), 0x3, 0x4000);
+    mapPages(pagemap, ((uint64_t)memory_map & ~0xfff), ((uint64_t)memory_map & ~0xfff), 0x1, 0x5000);
 
     // Get the MemoryMap
     status = sysT->BootServices->GetMemoryMap(&memory_map_size, memory_map, &map_key, &descriptor_size, &descriptor_version);

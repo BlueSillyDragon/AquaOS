@@ -32,6 +32,7 @@ void initIdt()
     {
         idtSetDescriptor(i, isr_stub_table[i], 0x8e);
     }
+    idtSetDescriptor(60, isr_stub_table[32], 0x8e);
 
     loadIdtAsm(idtr.limit, idtr.base);
 

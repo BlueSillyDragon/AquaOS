@@ -18,13 +18,14 @@ target_include_directories(
     yuki.elf
     PRIVATE freestnd-c-hdrs/x86_64/include
     PRIVATE freestnd-cxx-hdrs/x86_64/include
-    PRIVATE ../boot/efi/inc/boot_protocol
-    PRIVATE ../kernel
+    PRIVATE ../snowboot/efi/inc/boot_protocol
+    PRIVATE ../yuki
 )
 
 target_compile_options(yuki.elf
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++23>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fsanitize=undefined>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-builtin-declaration-mismatch>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-target x86_64-unknown-none>
@@ -37,7 +38,7 @@ PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-stack-check>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fno-PIC>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fdata-sections>
-PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-I ../src/kernel/src>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-I ../yuki>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-m64>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-march=x86-64>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mno-80387>
@@ -56,4 +57,4 @@ PRIVATE -nostdlib
 PRIVATE -static
 PRIVATE -z max-page-size=0x1000
 PRIVATE -Wl,--gc-sections
-PRIVATE -T ../src/kernel/linker.ld)
+PRIVATE -T ../yuki/linker.ld)

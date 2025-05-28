@@ -12,6 +12,7 @@ class Terminal
         Terminal();
         void termInit(snowboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm);
         void termPrint(char *string, ...);
+        void termPutchar(unsigned short int c);
         void kerror(char *string);
         void ksuccess(char *string);
         void kinfo(INFO_TYPE type, char *string);   // Labels the string for different parts of the kernel (eg. [PMM])
@@ -24,5 +25,4 @@ class Terminal
         std::uint64_t cursorY;
         snowboot_framebuffer terminalFb;
         void plotPixels(std::uint64_t y, std::uint64_t x, uint32_t pixel);
-        void termPutchar(unsigned short int c);
 };

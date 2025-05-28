@@ -111,14 +111,33 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
         pagemap_t pagemap;
         pagemap = newPagemap();
 
+        memoryMap = getMemoryMap(pagemap);
+
+        // Map all of memory to HHDM
+        EFI_MEMORY_DESCRIPTOR *desc;
+        uint64_t nop = 0;
+
+        for(uint64_t i = 0; i < getEntryCount(); i++)
+        {
+            desc = (EFI_MEMORY_DESCRIPTOR *)((uint8_t *)memoryMap + (i * getDescSize()));
+            if(desc->Type == EfiConventionalMemory || desc->Type == EfiLoaderData || desc->Type == EfiLoaderCode || desc->Type == EfiBootServicesData || desc->Type == EfiBootServicesCode)
+            {
+                mapPages(pagemap, hhdmOffset + desc->PhysicalStart, desc->PhysicalStart, 0x3, (desc->NumberOfPages * 0x1000));
+                nop += desc->NumberOfPages;
+            }
+        }
+
         bdebug(INFO, "Mapping Pages...\r\n");
 
-        mapPages(pagemap, hhdmOffset, 0x0, 0x3, 0x100000000);
+        mapPages(pagemap, hhdmOffset + framebuffer->base, framebuffer->base, 0x3, 0x10000000);
+        mapPages(pagemap, hhdmOffset + ((uint64_t)&bootInfo & ~0xfff), ((uint64_t)&bootInfo & ~0xfff), 0x1, 0x2000);
+        mapPages(pagemap, hhdmOffset + ((uint64_t)&bootInfo.framebuffer & ~0xfff), ((uint64_t)&bootInfo.framebuffer & ~0xfff), 0x1, 0x2000);
         mapPages(pagemap, (pagemap.topLevel & ~0xfffffff), (pagemap.topLevel & ~0xfffffff), 0x3, 0x10000000);    // Insure where the page tables are is identity mapped
         mapPages(pagemap, kernelVaddr, kernelPaddr, 0x3, 0x100000);
 
         bdebug(INFO, "Page maps located around 0x%x\r\n", (pagemap.topLevel & ~0xfffffff));
 
+        // Get the memory map again and set fields in bootInfo
         memoryMap = getMemoryMap(pagemap);
 
         bootInfo.memoryMap = memoryMap;

@@ -28,9 +28,9 @@ PRIVATE $<$<COMPILE_LANGUAGE:C>:-fno-lto>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-fPIE>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
-PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi/limine-efi/inc>
-PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../src/boot/efi>
-PRIVATE $<$<COMPILE_LANGUAGE:C>:-isystem ../src/boot/efi/freestanding-headers>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../snowboot/efi/limine-efi/inc>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-I ../snowboot/efi>
+PRIVATE $<$<COMPILE_LANGUAGE:C>:-isystem ../snowboot/efi/freestanding-headers>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-m64>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-march=x86-64>
 PRIVATE $<$<COMPILE_LANGUAGE:C>:-mno-80387>
@@ -49,9 +49,9 @@ PRIVATE -pie
 PRIVATE -z text
 PRIVATE -Wl,-z,max-page-size=0x1000
 PRIVATE -Wl,-gc-sections
-PRIVATE -Wl,-T,../src/boot/efi/limine-efi/src/elf_x86_64_efi.lds
-PRIVATE ../src/boot/efi/limine-efi/src/crt0-efi-x86_64.S.o
-PRIVATE ../src/boot/efi/limine-efi/src/reloc_x86_64.c.o)
+PRIVATE -Wl,-T,../snowboot/efi/limine-efi/src/elf_x86_64_efi.lds
+PRIVATE ../snowboot/efi/limine-efi/src/crt0-efi-x86_64.S.o
+PRIVATE ../snowboot/efi/limine-efi/src/reloc_x86_64.c.o)
 
 add_custom_target(snowboot.efi ALL
 COMMAND llvm-objcopy -O binary snowboot snowboot.efi

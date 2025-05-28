@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(AquaOS C CXX ASM_NASM)
+project(SnowOS C CXX ASM_NASM)
 
 if (WIN32)
-    message("You are trying to build AquaOS on a Windows System, this has not been tested, and it's recommended to build on Linux")
+    message("You are trying to build SnowOS on a Windows System, you may encounter unexpected behavior!")
 endif()
 
-add_subdirectory(src/boot/efi)
-add_subdirectory(src/kernel)
+add_subdirectory(snowboot/efi)
+add_subdirectory(yuki)

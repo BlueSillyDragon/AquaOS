@@ -28,3 +28,7 @@ extern "C" void interruptHandler() {
 
     __asm__ volatile ("cli; hlt");
 }
+
+extern "C" void syscallHandler() {
+    kernTerminal.termPrint("\nA syscall has been invoked!\n");
+}

@@ -11,7 +11,7 @@ void *memcpy(void *dest, const void *src, size_t n);
 
 int memcmp(const void *s1, const void *s2, size_t n);
 
-AQUABOOT_MEM_TYPE uefiTypeToNative(EFI_MEMORY_TYPE type);
+SNOWBOOT_MEM_TYPE uefiTypeToNative(EFI_MEMORY_TYPE type);
 
 EFI_MEMORY_DESCRIPTOR* getMemoryMap(pagemap_t pagemap);
 

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <snowboot.h>
 #include <cstdarg>
 #include <inc/krnl_colors.hpp>
@@ -32,7 +33,8 @@ extern "C" void kernelMain (snowboot_info *bootInfo)
     initGdt();
     initIdt();
     initPmm(bootInfo->memoryMap, bootInfo->memMapEntries, bootInfo->descSize, bootInfo->hhdm);
-    initVmm(bootInfo->hhdm, bootInfo->kernelPaddr);
+
+    uint64_t test = pmmAlloc();
 
     hlt();
 }

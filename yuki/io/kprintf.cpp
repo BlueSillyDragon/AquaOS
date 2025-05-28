@@ -4,7 +4,8 @@
 
 extern "C" Terminal kernTerminal;
 
-void kprintf(char *string, ...) {
+void kprintf(char *string, ...)
+{
     std::va_list arg;
     va_start(arg, string);
     kernTerminal.termPrint(string, arg);

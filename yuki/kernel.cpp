@@ -1,3 +1,4 @@
+#include "inc/io/serial.hpp"
 #include <cstdint>
 #include <cstddef>
 #include <limine.h>
@@ -7,6 +8,8 @@
 #include <inc/io/logo.hpp>
 #include <inc/sys/gdt.hpp>
 #include <inc/sys/idt.hpp>
+#include <inc/mm/pmm.hpp>
+#include <inc/mm/vmm.hpp>
 
 #define KERNEL_MAJOR 0
 #define KERNEL_MINOR 1
@@ -33,6 +36,20 @@ namespace {
 __attribute__((used, section(".limine_requests")))
 volatile limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
+    .revision = 0,
+    .response = nullptr
+};
+
+__attribute__((used, section(".limine_requests")))
+volatile limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST,
+    .revision = 0,
+    .response = nullptr
+};
+
+__attribute__((used, section(".limine_requests")))
+volatile limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
     .revision = 0,
     .response = nullptr
 };
@@ -79,7 +96,10 @@ extern void (*__init_array_end[])();
 
 Terminal kernTerminal;
 
-extern "C" void kernelMain() {
+uint64_t hhdm;
+
+extern "C" void kernelMain()
+{
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
         hcf();
@@ -88,6 +108,18 @@ extern "C" void kernelMain() {
     // Call global constructors.
     for (std::size_t i = 0; &__init_array[i] != __init_array_end; i++) {
         __init_array[i]();
+    }
+
+    if (hhdm_request.response == nullptr)
+    {
+        hcf();
+    }
+
+    hhdm = hhdm_request.response->offset;
+
+    if (serialInit() == 1)
+    {
+        hcf();
     }
 
     // Ensure we got a framebuffer.
@@ -108,7 +140,18 @@ extern "C" void kernelMain() {
     initGdt();
     initIdt();
 
-    __asm__ volatile (" int $0x0 ");
+    // Ensure we have a Memory Map
+    if (memmap_request.response == nullptr)
+    {
+        hcf();
+    }
+
+    limine_memmap_response *memoryMap = memmap_request.response;
+
+    initPmm(memoryMap, hhdm);
+
+    uint64_t *test = (uint64_t *)(hhdm + pmmAlloc());
+    *test = 64;
 
     // We're done, just hang...
     hcf();

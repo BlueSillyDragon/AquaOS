@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <limine.h>
 #include <inc/io/terminal.hpp>
 #include <inc/mem.hpp>
 #include <inc/mm/pmm.hpp>
@@ -55,16 +56,26 @@ uint64_t virtToPhys(uint64_t virtualAddr)
     return (pml1[pml1Idx] & PT_ADDR_MASK);
 }
 
-void initVmm(std::uint64_t hhdm, std::uint64_t kernelPaddr)
+void initVmm(limine_memmap_response *memoryMap, std::uint64_t hhdm)
 {
     kernTerminal.kinfo(VMM, "Initializing VMM...\n");
     hhdmOffset = hhdm;
     pagemap.topLevel = pmmAlloc();
     memset(reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdm), 0x0, 0x1000);
+
+    uint64_t i = 0;
+
+    for(; i < memoryMap->entry_count; i++)
+    {
+        if (memoryMap->entries[i]->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
+        {
+            break;
+        }
+    }
     
     mapPages(hhdm, 0x0, 0x3, 0x100000000);
     mapPages(0x00000000b0000000, 0x00000000b0000000, 0x3, 0x10000000);
-    mapPages(kernelVirt, kernelPaddr, 0x3, 0x10000);
+    mapPages(kernelVirt, memoryMap->entries[i]->base, 0x3, 0x10000);
     mapPages(pagemap.topLevel, pagemap.topLevel, 0x3, 0x10000000);
 
     __asm__ volatile ("mov %0, %%rax; mov %%rax, %%cr3" :: "a"(pagemap.topLevel));

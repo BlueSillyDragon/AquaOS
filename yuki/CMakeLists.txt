@@ -1,12 +1,17 @@
 set(SOURCES "kernel.cpp"
 "io/terminal.cpp"
 "io/kprintf.cpp"
+"io/serial.cpp"
+"misc/mem.cpp"
+"misc/tinyubsan.cpp"
 "sys/gdt.cpp"
 "sys/idt.cpp"
 "sys/interrupts.cpp"
 "sys/gdt.asm"
 "sys/idt.asm"
-"sys/isr.asm")
+"sys/isr.asm"
+"mm/pmm.cpp"
+"mm/vmm.cpp")
 
 add_executable(yuki ${SOURCES})
 
@@ -21,7 +26,8 @@ PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++23>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-target x86_64-unknown-none>
-PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-masm=intel>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fsanitize=undefined>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-builtin-declaration-mismatch>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-O2>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-nostdinc>

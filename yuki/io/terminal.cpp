@@ -3,6 +3,7 @@
 #include <inc/io/terminal.hpp>
 #include <inc/io/krnl_font.hpp>
 #include <inc/io/krnl_colors.hpp>
+#include <inc/io/serial.hpp>
 
 Terminal::Terminal()
 {
@@ -60,12 +61,14 @@ void Terminal::termPrint(char *string, ...)
         if (string[i] == 0x0A) {
             cursorY++;
             cursorX = 0;
+            write_serial('\n');
             continue;
         }
 
         // Check if it's '\t' if it is, move the cursor foward by 6 spaces
         if (string[i] == 0x09) {
             cursorX += 6;
+            write_serial('\t');
             continue;
         }
 
@@ -76,6 +79,7 @@ void Terminal::termPrint(char *string, ...)
 
             if (string[i] == '%') {
                 termPutchar('%');
+                write_serial('%');
                 cursorX++;
                 continue;
             }
@@ -84,6 +88,7 @@ void Terminal::termPrint(char *string, ...)
             {
                 char char_to_print = va_arg(argp, int);
                 termPutchar(char_to_print);
+                write_serial(char_to_print);
                 cursorX++;
                 continue;
             }
@@ -102,6 +107,7 @@ void Terminal::termPrint(char *string, ...)
 
                 for (; j>=0; j--) {
                     termPutchar((number[j] + '0'));
+                    write_serial((number[j] + '0'));
                     cursorX++;
                 }
 
@@ -124,8 +130,13 @@ void Terminal::termPrint(char *string, ...)
                     if(number[j] > 0x9)
                     {
                         termPutchar((number[j] + ('0' + 7)));
+                        write_serial((number[j] + ('0' + 7)));
                     }
-                    else termPutchar((number[j] + '0'));
+                    else 
+                    {
+                        termPutchar((number[j] + '0'));
+                        write_serial((number[j] + '0'));
+                    }
                     cursorX++;
                 }
 
@@ -138,6 +149,7 @@ void Terminal::termPrint(char *string, ...)
                 while (*string_to_print != '\0')
                 {
                     termPutchar(*string_to_print);
+                    write_serial(*string_to_print);
                     string_to_print++;
                     cursorX++;
                 }
@@ -146,6 +158,7 @@ void Terminal::termPrint(char *string, ...)
 
             else {
                 termPutchar('0');
+                write_serial('0');
                 cursorX++;
                 continue;
             }
@@ -154,6 +167,7 @@ void Terminal::termPrint(char *string, ...)
         }
 
         termPutchar(string[i]);
+        write_serial(string[i]);
 
         cursorX++;
     }
@@ -164,6 +178,7 @@ void Terminal::termPrint(char *string, ...)
 void Terminal::kerror(char *string)
 {
     termPrint("[");
+    write_serial('[');
     changeColors(KRNL_RED, KRNL_DARK_GREY);
     termPrint(" Error ");
     changeColors(KRNL_WHITE, KRNL_DARK_GREY);

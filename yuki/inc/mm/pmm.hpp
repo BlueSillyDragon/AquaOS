@@ -1,8 +1,8 @@
 #pragma once
 
-#include <snowboot.h>
+#include <limine.h>
 #include <cstdint>
 
-void initPmm(snowboot_memory_descriptor *memoryMap, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm);
+void initPmm(limine_memmap_response *memoryMap, uint64_t hhdm);
 uint64_t pmmAlloc();
 void pmmFree(uint64_t page);

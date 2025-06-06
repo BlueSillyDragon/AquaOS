@@ -1,4 +1,4 @@
-#include <snowboot.h>
+#include <limine.h>
 #include <cstdint>
 #include <inc/io/terminal.hpp>
 #include <inc/mm/pmm.hpp>
@@ -9,54 +9,51 @@ uint64_t head;
 
 uint64_t hhdm_offset;      // We need this to actually access the page, so that we can retrieve the next page in the free list
 
-char *memTypeToString(std::uint32_t memType)
+char *memTypeToString(std::uint64_t memType)
 {
     switch (memType)
     {
-        case SNOWOS_RESERVED:
+        case LIMINE_MEMMAP_RESERVED:
             return "Reserved";
-        case SNOWOS_RUNTIME_SERVICES:
-            return "UEFI Runtime Services";
-        case SNOWOS_ACPI_RECLAIM:
+        case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
             return "ACPI Reclaimable Memory";
-        case SNOWOS_BOOT_RECLAIM:
+        case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
             return "Bootloader Reclaimable Memory";
-        case SNOWOS_FREE_MEMORY:
+        case LIMINE_MEMMAP_USABLE:
             return "Free Memory";
+        case LIMINE_MEMMAP_KERNEL_AND_MODULES:
+            return "Kernel and Modules";
         default:
             return "Unknown Memory Type";
     }
 }
 
-void initPmm(snowboot_memory_descriptor *memoryMap, std::uint64_t entries, std::uint64_t desc_size, uint64_t hhdm)
+void initPmm(limine_memmap_response *memoryMap, uint64_t hhdm)
 {
     kernTerminal.kinfo(PMM, "Initialzing PMM...\n");
 
     uint64_t nop = 0;
     uint64_t next = 0;
     hhdm_offset = hhdm;
-    snowboot_memory_descriptor *desc;
 
-    for(uint64_t i = 0; i < entries; i++)
+    for(uint64_t i = 0; i < memoryMap->entry_count; i++)
     {
         static bool setEnd = false;
 
-        desc = (snowboot_memory_descriptor *)((uint8_t *)memoryMap + (i * desc_size));
-
-        if (desc->type == SNOWOS_FREE_MEMORY)
+        if (memoryMap->entries[i]->type == LIMINE_MEMMAP_USABLE)
         {
-            nop += desc->numOfPages;
+            nop += (memoryMap->entries[i]->length / 0x1000);
 
             // Loop through all pages in memory area, and link them together
-            for (uint64_t j = 0; j < desc->numOfPages; j++)
+            for (uint64_t j = 0; j < (memoryMap->entries[i]->length / 0x1000); j++)
             {
                 if (setEnd)
                 {
-                    *reinterpret_cast<uint64_t *>(hhdm + next) = desc->physicalStart;
+                    *reinterpret_cast<uint64_t *>(hhdm + next) = memoryMap->entries[i]->base;
                     setEnd = false;
                 }
 
-                next = (desc->physicalStart + j * 0x1000);
+                next = (memoryMap->entries[i]->base + j * 0x1000);
 
                 *reinterpret_cast<uint64_t *>(hhdm + next) = (next + 0x1000);
 
@@ -89,7 +86,7 @@ uint64_t pmmAlloc()
     uint64_t page = head;
     head = *reinterpret_cast<uint64_t *>(hhdm_offset + head);
 
-    kernTerminal.termPrint("Memory allocated at 0x%x, Head now points to 0x%x\n", page, head);
+    //kernTerminal.termPrint("Memory allocated at 0x%x, Head now points to 0x%x\n", page, head);
 
     return page;
 }

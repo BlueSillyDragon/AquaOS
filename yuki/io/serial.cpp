@@ -36,8 +36,18 @@ int is_transmit_empty() {
    return inb(PORT + 5) & 0x20;
 }
 
-void write_serial(char a) {
+void writeSerial(char a) {
    while (is_transmit_empty() == 0);
 
    outb(PORT,a);
+}
+
+void stringToSerial(char *string)
+{
+    std::uint64_t i = 0;
+    while(string[i] != '\0')
+    {
+        writeSerial(string[i]);
+        i++;
+    }
 }

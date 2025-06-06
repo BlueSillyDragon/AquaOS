@@ -61,14 +61,14 @@ void Terminal::termPrint(char *string, ...)
         if (string[i] == 0x0A) {
             cursorY++;
             cursorX = 0;
-            write_serial('\n');
+            writeSerial('\n');
             continue;
         }
 
         // Check if it's '\t' if it is, move the cursor foward by 6 spaces
         if (string[i] == 0x09) {
             cursorX += 6;
-            write_serial('\t');
+            writeSerial('\t');
             continue;
         }
 
@@ -79,7 +79,7 @@ void Terminal::termPrint(char *string, ...)
 
             if (string[i] == '%') {
                 termPutchar('%');
-                write_serial('%');
+                writeSerial('%');
                 cursorX++;
                 continue;
             }
@@ -88,7 +88,7 @@ void Terminal::termPrint(char *string, ...)
             {
                 char char_to_print = va_arg(argp, int);
                 termPutchar(char_to_print);
-                write_serial(char_to_print);
+                writeSerial(char_to_print);
                 cursorX++;
                 continue;
             }
@@ -107,7 +107,7 @@ void Terminal::termPrint(char *string, ...)
 
                 for (; j>=0; j--) {
                     termPutchar((number[j] + '0'));
-                    write_serial((number[j] + '0'));
+                    writeSerial((number[j] + '0'));
                     cursorX++;
                 }
 
@@ -130,12 +130,12 @@ void Terminal::termPrint(char *string, ...)
                     if(number[j] > 0x9)
                     {
                         termPutchar((number[j] + ('0' + 7)));
-                        write_serial((number[j] + ('0' + 7)));
+                        writeSerial((number[j] + ('0' + 7)));
                     }
                     else 
                     {
                         termPutchar((number[j] + '0'));
-                        write_serial((number[j] + '0'));
+                        writeSerial((number[j] + '0'));
                     }
                     cursorX++;
                 }
@@ -149,7 +149,7 @@ void Terminal::termPrint(char *string, ...)
                 while (*string_to_print != '\0')
                 {
                     termPutchar(*string_to_print);
-                    write_serial(*string_to_print);
+                    writeSerial(*string_to_print);
                     string_to_print++;
                     cursorX++;
                 }
@@ -158,7 +158,7 @@ void Terminal::termPrint(char *string, ...)
 
             else {
                 termPutchar('0');
-                write_serial('0');
+                writeSerial('0');
                 cursorX++;
                 continue;
             }
@@ -167,7 +167,7 @@ void Terminal::termPrint(char *string, ...)
         }
 
         termPutchar(string[i]);
-        write_serial(string[i]);
+        writeSerial(string[i]);
 
         cursorX++;
     }
@@ -178,9 +178,11 @@ void Terminal::termPrint(char *string, ...)
 void Terminal::kerror(char *string)
 {
     termPrint("[");
-    write_serial('[');
+    writeSerial('[');
     changeColors(KRNL_RED, KRNL_DARK_GREY);
+    stringToSerial("\033[31;1m");
     termPrint(" Error ");
+    stringToSerial("\033[0m");
     changeColors(KRNL_WHITE, KRNL_DARK_GREY);
     termPrint("] ");
     termPrint(string);
@@ -190,7 +192,9 @@ void Terminal::ksuccess(char *string)
 {
     termPrint("[");
     changeColors(KRNL_GREEN, KRNL_DARK_GREY);
+    stringToSerial("\033[32;1m");
     termPrint(" OK ");
+    stringToSerial("\033[0m");
     changeColors(KRNL_WHITE, KRNL_DARK_GREY);
     termPrint("] ");
     termPrint(string);
@@ -203,19 +207,23 @@ void Terminal::kinfo(INFO_TYPE type, char *string)
     {
         case PMM:
             changeColors(KRNL_BLUE, KRNL_DARK_GREY);
+            stringToSerial("\033[34;1m");
             termPrint("PMM");
             break;
         case VMM:
             changeColors(KRNL_PINK, KRNL_DARK_GREY);
+            stringToSerial("\033[95;1m");
             termPrint("VMM");
             break;
         case SCHEDULER:
             changeColors(KRNL_GREEN, KRNL_DARK_GREY);
+            stringToSerial("\033[32;1m");
             termPrint("SCHEDULER");
             break;
         default:
         termPrint(" ");
     }
+    stringToSerial("\033[0m");
     changeColors(KRNL_WHITE, KRNL_DARK_GREY);
     termPrint(" ] ");
     termPrint(string);

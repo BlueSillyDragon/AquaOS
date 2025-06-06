@@ -1,34 +1,27 @@
 set(SOURCES "kernel.cpp"
-"misc/mem.cpp"
 "io/terminal.cpp"
 "io/kprintf.cpp"
-"misc/tinyubsan.cpp"
 "sys/gdt.cpp"
 "sys/idt.cpp"
 "sys/interrupts.cpp"
 "sys/gdt.asm"
 "sys/idt.asm"
-"sys/isr.asm"
-"mm/pmm.cpp"
-"mm/vmm.cpp")
+"sys/isr.asm")
 
-add_executable(yuki.elf ${SOURCES})
+add_executable(yuki ${SOURCES})
 
-target_include_directories(
-    yuki.elf
+target_include_directories(yuki
     PRIVATE freestnd-c-hdrs/x86_64/include
     PRIVATE freestnd-cxx-hdrs/x86_64/include
-    PRIVATE ../snowboot/efi/inc/boot_protocol
     PRIVATE ../yuki
 )
 
-target_compile_options(yuki.elf
+target_compile_options(yuki
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++23>
-PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fsanitize=undefined>
-PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-builtin-declaration-mismatch>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-target x86_64-unknown-none>
+PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-masm=intel>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-O2>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-nostdinc>
@@ -50,7 +43,7 @@ PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=kernel>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MMD>
 PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-MP>)
 
-target_link_options(yuki.elf
+target_link_options(yuki
 PRIVATE -Wl,-m,elf_x86_64
 PRIVATE -Wl,--build-id=none
 PRIVATE -nostdlib

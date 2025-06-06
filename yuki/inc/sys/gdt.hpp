@@ -12,7 +12,7 @@ typedef struct
 {
     std::uint16_t limit;
     std::uint64_t base;
-} gdtr_t;
+} __attribute__((packed)) gdtr_t;
 
 typedef struct
 {
@@ -21,6 +21,6 @@ typedef struct
     std::uint64_t kernel_data;
     std::uint64_t user_code;
     std::uint64_t user_data;
-} gdt_t;
+} __attribute__((packed)) gdt_t;
 
 void initGdt();

@@ -1,16 +1,3 @@
-global loadGdtAsm
-
-section .text
-
-gdtr    dw 0
-        dq 0
-
-loadGdtAsm:
-    mov [gdtr], di
-    mov [gdtr+2], rsi
-    lgdt [gdtr]
-    ret
-
 global reloadSegs
 
 reloadSegs:

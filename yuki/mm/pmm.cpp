@@ -1,6 +1,6 @@
 #include <snowboot.h>
 #include <cstdint>
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 #include <inc/mm/pmm.hpp>
 
 extern "C" Terminal kernTerminal;

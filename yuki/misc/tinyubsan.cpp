@@ -1,4 +1,4 @@
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 #include <stdint.h>
 
 extern "C" Terminal kernTerminal;
@@ -133,6 +133,23 @@ extern "C"
     }
 
     void __ubsan_handle_type_mismatch_v1(struct tu_type_mismatch_v1_data *data, uintptr_t ptr)
+    {
+        if (!ptr)
+        {
+            tu_print_location("use of NULL pointer", data->location);
+        }
+
+        else if (ptr & ((1 << data->log_alignment) - 1))
+        {
+            tu_print_location("use of misaligned pointer", data->location);
+        }
+        else
+        {
+            tu_print_location("no space for object", data->location);
+        }
+    }
+
+    void __ubsan_handle_function_type_mismatch(struct tu_type_mismatch_v1_data *data, uintptr_t ptr)
     {
         if (!ptr)
         {

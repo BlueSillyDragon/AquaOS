@@ -1,23 +1,23 @@
 #include <cstdint>
 #include <cstdarg>
-#include <inc/terminal.hpp>
-#include <inc/krnl_font.hpp>
-#include <inc/krnl_colors.hpp>
+#include <inc/io/terminal.hpp>
+#include <inc/io/krnl_font.hpp>
+#include <inc/io/krnl_colors.hpp>
 
 Terminal::Terminal()
 {
-    terminalFb.base = 0;
+    terminalFb.address = 0;
     terminalFb.pitch = 0;
     terminalForeground = 0;
     terminalBackground = 0;
 }
 
-void Terminal::termInit(snowboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm)
+void Terminal::termInit(limine_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background)
 {
-    terminalFb.base = (hhdm + framebuffer->base);
+    terminalFb.address = framebuffer->address;
     terminalFb.pitch = framebuffer->pitch;
-    terminalFb.horizontalRes = framebuffer->horizontalRes;
-    terminalFb.verticalRes = framebuffer->verticalRes;
+    terminalFb.width = framebuffer->width;
+    terminalFb.height = framebuffer->height;
     terminalForeground = foreground;
     terminalBackground = background;
     cursorX = 0;
@@ -26,7 +26,7 @@ void Terminal::termInit(snowboot_framebuffer *framebuffer, std::uint32_t foregro
 
 void Terminal::plotPixels(std::uint64_t y, std::uint64_t x, uint32_t pixel)
 {
-    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminalFb.base);
+    std::uint32_t *fb_ptr = reinterpret_cast<std::uint32_t *>(terminalFb.address);
     fb_ptr[x * (terminalFb.pitch / 4) + y] = pixel;
 }
 
@@ -214,9 +214,9 @@ void Terminal::changeColors(std::uint32_t foreground, std::uint32_t background)
 
 void Terminal::clearScreen()
 {
-    for (uint64_t i = 0; i < terminalFb.horizontalRes; i++)
+    for (uint64_t i = 0; i < terminalFb.width; i++)
     {
-        for (uint64_t j = 0; j < terminalFb.verticalRes; j++)
+        for (uint64_t j = 0; j < terminalFb.height; j++)
         {
             plotPixels(i, j, terminalBackground);
         }

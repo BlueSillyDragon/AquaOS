@@ -1,5 +1,5 @@
 #include <cstdint>
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 
 extern Terminal kernTerminal;
 

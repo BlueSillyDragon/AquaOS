@@ -1,6 +1,6 @@
 #pragma once
 
-#include <snowboot.h>
+#include <limine.h>
 #include <cstdint>
 #include <cstdarg>
 
@@ -10,7 +10,7 @@ class Terminal
 {
     public:
         Terminal();
-        void termInit(snowboot_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background, std::uint64_t hhdm);
+        void termInit(limine_framebuffer *framebuffer, std::uint32_t foreground, std::uint32_t background);
         void termPrint(char *string, ...);
         void termPutchar(unsigned short int c);
         void kerror(char *string);
@@ -23,6 +23,6 @@ class Terminal
         std::uint32_t terminalBackground;
         std::uint64_t cursorX;
         std::uint64_t cursorY;
-        snowboot_framebuffer terminalFb;
+        limine_framebuffer terminalFb;
         void plotPixels(std::uint64_t y, std::uint64_t x, uint32_t pixel);
 };

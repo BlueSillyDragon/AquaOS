@@ -22,27 +22,17 @@ Also install qemu and ovmf for running SnowOS, you can skip this if you're going
 > [!WARNING]
 > I can't guarantee that SnowOS will run on VirtualBox, but feel free to try
 
-### Step 3: Run get-deps and build Limine-Efi
+### Step 3: Run get-deps
 
-SnowOS uses the Limine-Efi library for it's bootloader, hence, you will need to build it.
-First go to the src dir of the efi bootloader
+You'll need to get Yuki's dependencies by running get-deps
 ```
-$ cd src/boot/efi
+$ cd yuki
 ```
 Then run get-deps
 ```
 $ ./get-deps
 ```
-Now limine-efi should've been cloned into the current directory.
-Next up is building limine-efi, this is simple enough.
-```
-$ cd limine-efi/src
-$ make -f limine-efi.mk
-```
-Now you're free to return to the main directory.
-```
-$ cd ../../../../../
-```
+This will get C and C++ freestanding headers, as well as limine.h for the kernel
 
 ### Step 4: Run CMake
 
@@ -55,30 +45,12 @@ cd into there, and then run the command for CMake below
 $ cd build
 $ cmake .. -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 ```
-
-### Step 5: Run Ninja
-
-You should still be in the build directory, so all you have to do us run Ninja.
+Now you just have to run ninja
 ```
 $ ninja
 ```
-Now you'll probably see something like this:
-```
-$ FAILED: src/boot/efi/CMakeFiles/snowboot.efi /home/user/Desktop/SnowOS/build/src/boot/efi/CMakeFiles/snowboot.efi 
-$ cd /home/user/Desktop/SnowOS/build/src/boot/efi && llvm-objcopy -O binary snowboot snowboot.efi && dd if=/dev/zero of=snowboot.efi bs=4096 count=0 seek=$ ( ( ( $ ( wc -c < snowboot.efi ) + 4095 ) / 4096 ) ) 2>/dev/null
-$ /bin/sh: 1: Syntax error: "(" unexpected
-$ ninja: build stopped: subcommand failed.
-```
-Don't panic, for some reason the spacing on the last command is messed up, you can just fix it manually.
-First open build.ninja in whatever code editor you use. Then go to line 172.
-Go near the end and delete everything after "seek=" and replace it with this "$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096)) 2>/dev/null" should look like this after you're done.
-```
-...seek=$$(( ($$(wc -c < snowboot.efi) + 4095) / 4096)) 2>/dev/null
-```
 
-Now save and run ninja again.
-
-### Step 6: Run SnowOS
+### Step 5: Run SnowOS
 
 Now all you have to do is build the image file and run SnowOS under QEMU (or your VM of choice, just remember that you need to configure the VM settings to use UEFI).
 
@@ -92,7 +64,7 @@ This should generate an image file called SnowOS.img, then you can just run it n
 Now when you run SnowOS, you should be booted into the kernel.
 
 ## Technologies
-limine-efi by mintsuki as a UEFI library, uses tinyubsan by rdmsr, and SnowBoot is the custom bootloader.
+Uses tinyubsan by rdmsr, Limine is the bootloader (will eventually swap back in with SnowBoot once I'm more confident in SnowBoot's abilities lol).
 
 ## License
 SnowOS is under an GPLv3 License.

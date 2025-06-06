@@ -1,5 +1,5 @@
 #include <cstdint>
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 #include <inc/mem.hpp>
 #include <inc/mm/pmm.hpp>
 #include <inc/mm/vmm.hpp>

@@ -1,8 +1,6 @@
 #include <cstdint>
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 #include <inc/sys/idt.hpp>
-
-extern "C" void loadIdtAsm(std::uint16_t limit, std::uint64_t base);
 
 extern Terminal kernTerminal;
 
@@ -34,7 +32,7 @@ void initIdt()
     }
     idtSetDescriptor(0x60, isr_stub_table[32], 0x8e);
 
-    loadIdtAsm(idtr.limit, idtr.base);
+    __asm__ volatile ("lidt %0" :: "m"(idtr));
 
     kernTerminal.ksuccess("IDT Initialized!\n");
 }

@@ -1,8 +1,7 @@
 #include <cstdint>
-#include <inc/terminal.hpp>
+#include <inc/io/terminal.hpp>
 #include <inc/sys/gdt.hpp>
 
-extern "C" void loadGdtAsm(std::uint16_t limit, std::uint64_t base);
 extern "C" void reloadSegs(void);
 
 extern Terminal kernTerminal;
@@ -24,7 +23,7 @@ void initGdt()
     gdtr.limit = (sizeof(gdt) - 1);
 
     // Load the GDT and reload segment registers
-    loadGdtAsm(gdtr.limit, gdtr.base);
+    __asm__ volatile ("lgdt %0" :: "m"(gdtr));
     reloadSegs();
 
     kernTerminal.ksuccess("GDT Initialized!\n");

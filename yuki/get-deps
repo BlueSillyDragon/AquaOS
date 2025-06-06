@@ -76,6 +76,10 @@ clone_repo_commit \
 
 clone_repo_commit \
     https://codeberg.org/osdev/cc-runtime.git \
-    src/cc-runtime \
+    cc-runtime \
     b4d3b970b2f6e7d08360c66eea8314e8dd901490
 
+download_by_hash \
+    https://github.com/limine-bootloader/limine/raw/4687a182be23939c2d9f15db970382dc353ed956/limine.h \
+    limine.h \
+    6879e626f34c1be25ac2f72bf43b083fc2b53887280bb0fcdaee790e258c6974

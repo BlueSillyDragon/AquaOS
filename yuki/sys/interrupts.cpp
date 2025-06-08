@@ -23,13 +23,15 @@ char *panicArt = "   ____________    _______________________________\n"
 __attribute__((noreturn))
 extern "C" void interruptHandler(void);
 extern "C" void interruptHandler() {
+    __asm__ volatile ("cli");
+
     kernTerminal.termPrint("\nKERNEL PANIC!\nA Fatal Error occured and the kernel can no longer continue!\n");
     kernTerminal.termPrint(panicArt);
 
-    __asm__ volatile ("cli; hlt");
+    __asm__ volatile ("hlt");
 }
 
 extern "C" void syscallHandler() {
     kernTerminal.termPrint("\nA syscall has been invoked!\n");
-    __asm__ volatile (" cli; hlt ");
+    return;
 }

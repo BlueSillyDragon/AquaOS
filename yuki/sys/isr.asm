@@ -5,6 +5,10 @@ isr_stub_%+%1:
     push rcx
     push rdx
     call interruptHandler
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
     iretq
 %endmacro
 
@@ -22,6 +26,7 @@ isr_stub_%+%1:
 isr_stub_%+%1:
     push rax
     call syscallHandler
+    pop rax
     iretq
 %endmacro
 

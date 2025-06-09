@@ -1,16 +1,18 @@
 #include <cstdint>
 #include <limine.h>
 #include <inc/io/terminal.hpp>
-#include <inc/klib/string.hpp>
+#include <inc/klibc/string.hpp>
 #include <inc/io/serial.hpp>
 #include <inc/mm/pmm.hpp>
 #include <inc/mm/vmm.hpp>
 #include <stdint.h>
 
-#define VIRT_MASK 0x0000ffffffffffff
-#define PT_ADDR_MASK 0x0000fffffffff000
-
-#define PT_IS_PRESENT(pt) (pt & (1 << 0))
+constexpr uint64_t ptePresent = 0x1;
+constexpr uint64_t pteWrite = 0x2;
+constexpr uint64_t pteUser = 0x4;
+constexpr uint64_t ptePwt = 0x8;
+constexpr uint64_t ptePcd = 0x10;
+constexpr uint64_t pteAddress = 0x0000fffffffff000;
 
 #define PML4_ID(virt) (((virt) >> 39) & 0x1FF)
 #define PDPT_ID(virt) (((virt) >> 30) & 0x1FF)
@@ -25,38 +27,6 @@ uint64_t hhdmOffset;
 
 uint64_t kernelVirt = 0xffffffff80000000;
 
-uint64_t getLowerLevel(uint64_t *currentLevel, uint64_t entry)
-{
-    uint64_t nextLevel;
-    if(PT_IS_PRESENT(currentLevel[entry]))
-    {
-        nextLevel = (currentLevel[entry] & PT_ADDR_MASK);
-    }
-
-    else
-    {
-        nextLevel = pmmAlloc();
-        KLib::memset(reinterpret_cast<uint64_t *>(nextLevel + hhdmOffset), 0x0, 0x1000);
-        currentLevel[entry] = (nextLevel | (1 << 0));
-    }
-    return nextLevel;
-}
-
-uint64_t virtToPhys(uint64_t virtualAddr)
-{
-    uint64_t pml4Idx = PML4_ID(virtualAddr);
-    uint64_t pml3Idx = PDPT_ID(virtualAddr);
-    uint64_t pml2Idx = PD_ID(virtualAddr);
-    uint64_t pml1Idx = PT_ID(virtualAddr);
-
-    uint64_t *pml4 = reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdmOffset);
-    uint64_t *pml3 = reinterpret_cast<uint64_t *>(getLowerLevel(pml4, pml4Idx) + hhdmOffset);
-    uint64_t *pml2 = reinterpret_cast<uint64_t *>(getLowerLevel(pml3, pml3Idx) + hhdmOffset);
-    uint64_t *pml1 = reinterpret_cast<uint64_t *>(getLowerLevel(pml2, pml2Idx) + hhdmOffset);
-
-    return (pml1[pml1Idx] & PT_ADDR_MASK);
-}
-
 void initVmm(limine_memmap_response *memoryMap, std::uint64_t hhdm)
 {
     kernTerminal.kinfo(VMM, "Initializing VMM...\n");
@@ -70,18 +40,45 @@ void initVmm(limine_memmap_response *memoryMap, std::uint64_t hhdm)
 
     for (uint64_t i = 0; i < 512; i++)
     {
-        if (PT_IS_PRESENT(reinterpret_cast<uint64_t *>(oldCr3 + hhdm)[i]))
+        if (reinterpret_cast<uint64_t *>(oldCr3 + hhdm)[i] & ptePresent)
         {
             reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdm)[i] = reinterpret_cast<uint64_t *>(oldCr3 + hhdm)[i];
         }
     }
 
-    __asm__ volatile ("mov %0, %%rax; mov %%rax, %%cr3" :: "a"(pagemap.topLevel));
+    __asm__ volatile ("mov %0, %%cr3" :: "r"(pagemap.topLevel) : "memory");
 
     kernTerminal.kinfo(VMM, "VMM Initialized!\n");
 }
 
-void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint8_t flags)
+uint64_t createPte(uint64_t physicalAddr, uint64_t flags)
+{
+    auto pte = (physicalAddr | ptePresent);
+
+    if (flags & pteWrite)
+    {
+        pte |= pteWrite;
+    }
+
+    if (flags & pteUser)
+    {
+        pte |= pteUser;
+    }
+
+    if (flags & ptePwt)
+    {
+        pte |= ptePwt;
+    }
+
+    if (flags & ptePcd)
+    {
+        pte |= ptePcd;
+    }
+
+    return pte;
+}
+
+void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint64_t flags)
 {
     if (virtualAddr % 0x1000 != 0 || physicalAddr % 0x1000 != 0)
     {
@@ -89,18 +86,30 @@ void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint8_t flags)
         __asm__ volatile (" hlt ");
     }
 
-    uint64_t pml4Idx = PML4_ID(virtualAddr);
-    uint64_t pml3Idx = PDPT_ID(virtualAddr);
-    uint64_t pml2Idx = PD_ID(virtualAddr);
-    uint64_t pml1Idx = PT_ID(virtualAddr);
-
     uint64_t *pml4 = reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdmOffset);
-    uint64_t *pml3 = reinterpret_cast<uint64_t *>(getLowerLevel(pml4, pml4Idx) + hhdmOffset);
-    uint64_t *pml2 = reinterpret_cast<uint64_t *>(getLowerLevel(pml3, pml3Idx) + hhdmOffset);
-    uint64_t *pml1 = reinterpret_cast<uint64_t *>(getLowerLevel(pml2, pml2Idx) + hhdmOffset);
+    uint64_t *pdpt, *pd, *pt;
 
-    pml1[pml1Idx] = (physicalAddr | flags);
-    kernTerminal.termPrint("Page now mapped: 0x%x\n", (physicalAddr | flags));
+    if (!(pml4[PML4_ID(virtualAddr)] & ptePresent))
+    {
+        pml4[PML4_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+    }
+    pdpt = reinterpret_cast<uint64_t *>((pml4[PML4_ID(virtualAddr)] & pteAddress) + hhdmOffset);
+    KLib::memset(pdpt, 0x0, 0x1000);
+
+    if (!(pdpt[PDPT_ID(virtualAddr)] & ptePresent))
+    {
+        pdpt[PDPT_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+    }
+    pd = reinterpret_cast<uint64_t *>((pdpt[PDPT_ID(virtualAddr)] & pteAddress) + hhdmOffset);
+    KLib::memset(pd, 0x0, 0x1000);
+
+    if (!(pd[PD_ID(virtualAddr)] & ptePresent))
+    {
+        pd[PD_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+    }
+    pt = reinterpret_cast<uint64_t *>((pd[PD_ID(virtualAddr)] & pteAddress) + hhdmOffset);
+    KLib::memset(pt, 0x0, 0x1000);
+    pt[PT_ID(virtualAddr)] = createPte(physicalAddr, flags);
 }
 
 void mapPages(uint64_t virtualStart, uint64_t physicalStart, uint8_t flags, uint64_t count)

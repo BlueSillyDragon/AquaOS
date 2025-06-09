@@ -1,4 +1,4 @@
-#include <inc/klib/string.hpp>
+#include <inc/klibc/string.hpp>
 
 extern "C" {
 

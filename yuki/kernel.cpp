@@ -1,9 +1,9 @@
-#include "inc/io/serial.hpp"
 #include <cstdint>
 #include <cstddef>
 #include <limine.h>
-#include <inc/klib/string.hpp>
+#include <inc/klibc/string.hpp>
 #include <inc/io/terminal.hpp>
+#include <inc/io/serial.hpp>
 #include <inc/io/krnl_colors.hpp>
 #include <inc/io/logo.hpp>
 #include <inc/sys/gdt.hpp>
@@ -155,7 +155,7 @@ extern "C" void kernelMain()
 
     initVmm(memoryMap, hhdm);
 
-    mapPage(0x2000, 0x2000, 0x3);
+    mapPages(0x10000, 0x10000, 0x2, 0xf000); // Map arbitrary area for testing
 
     // We're done, just hang...
     hcf();

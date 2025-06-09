@@ -1,7 +1,8 @@
 #include <cstdint>
 #include <limine.h>
 #include <inc/io/terminal.hpp>
-#include <inc/mem.hpp>
+#include <inc/klib/string.hpp>
+#include <inc/io/serial.hpp>
 #include <inc/mm/pmm.hpp>
 #include <inc/mm/vmm.hpp>
 #include <stdint.h>
@@ -35,7 +36,7 @@ uint64_t getLowerLevel(uint64_t *currentLevel, uint64_t entry)
     else
     {
         nextLevel = pmmAlloc();
-        memset(reinterpret_cast<uint64_t *>(nextLevel + hhdmOffset), 0x0, 0x1000);
+        KLib::memset(reinterpret_cast<uint64_t *>(nextLevel + hhdmOffset), 0x0, 0x1000);
         currentLevel[entry] = (nextLevel | (1 << 0));
     }
     return nextLevel;
@@ -61,24 +62,23 @@ void initVmm(limine_memmap_response *memoryMap, std::uint64_t hhdm)
     kernTerminal.kinfo(VMM, "Initializing VMM...\n");
     hhdmOffset = hhdm;
     pagemap.topLevel = pmmAlloc();
-    memset(reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdm), 0x0, 0x1000);
+    KLib::memset(reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdm), 0x0, 0x1000);
 
-    uint64_t i = 0;
+    uint64_t oldCr3 = 0;
 
-    for(; i < memoryMap->entry_count; i++)
+    __asm__ volatile ("mov %%cr3, %%rax; mov %%rax, %0" : "=a"(oldCr3));
+
+    for (uint64_t i = 0; i < 512; i++)
     {
-        if (memoryMap->entries[i]->type == LIMINE_MEMMAP_KERNEL_AND_MODULES)
+        if (PT_IS_PRESENT(reinterpret_cast<uint64_t *>(oldCr3 + hhdm)[i]))
         {
-            break;
+            reinterpret_cast<uint64_t *>(pagemap.topLevel + hhdm)[i] = reinterpret_cast<uint64_t *>(oldCr3 + hhdm)[i];
         }
     }
-    
-    mapPages(hhdm, 0x0, 0x3, 0x100000000);
-    mapPages(0x00000000b0000000, 0x00000000b0000000, 0x3, 0x10000000);
-    mapPages(kernelVirt, memoryMap->entries[i]->base, 0x3, 0x10000);
-    mapPages(pagemap.topLevel, pagemap.topLevel, 0x3, 0x10000000);
 
     __asm__ volatile ("mov %0, %%rax; mov %%rax, %%cr3" :: "a"(pagemap.topLevel));
+
+    kernTerminal.kinfo(VMM, "VMM Initialized!\n");
 }
 
 void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint8_t flags)
@@ -100,6 +100,7 @@ void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint8_t flags)
     uint64_t *pml1 = reinterpret_cast<uint64_t *>(getLowerLevel(pml2, pml2Idx) + hhdmOffset);
 
     pml1[pml1Idx] = (physicalAddr | flags);
+    kernTerminal.termPrint("Page now mapped: 0x%x\n", (physicalAddr | flags));
 }
 
 void mapPages(uint64_t virtualStart, uint64_t physicalStart, uint8_t flags, uint64_t count)

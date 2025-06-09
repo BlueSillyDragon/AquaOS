@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limine.h>
-#include <inc/mem.hpp>
+#include <inc/klib/string.hpp>
 #include <inc/io/terminal.hpp>
 #include <inc/io/krnl_colors.hpp>
 #include <inc/io/logo.hpp>
@@ -152,6 +152,10 @@ extern "C" void kernelMain()
 
     uint64_t *test = (uint64_t *)(hhdm + pmmAlloc());
     *test = 64;
+
+    initVmm(memoryMap, hhdm);
+
+    mapPage(0x2000, 0x2000, 0x3);
 
     // We're done, just hang...
     hcf();

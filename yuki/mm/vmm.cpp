@@ -91,21 +91,21 @@ void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint64_t flags)
 
     if (!(pml4[PML4_ID(virtualAddr)] & ptePresent))
     {
-        pml4[PML4_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+        pml4[PML4_ID(virtualAddr)] = createPte(pmmAlloc(), 0);
     }
     pdpt = reinterpret_cast<uint64_t *>((pml4[PML4_ID(virtualAddr)] & pteAddress) + hhdmOffset);
     KLib::memset(pdpt, 0x0, 0x1000);
 
     if (!(pdpt[PDPT_ID(virtualAddr)] & ptePresent))
     {
-        pdpt[PDPT_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+        pdpt[PDPT_ID(virtualAddr)] = createPte(pmmAlloc(), 0);
     }
     pd = reinterpret_cast<uint64_t *>((pdpt[PDPT_ID(virtualAddr)] & pteAddress) + hhdmOffset);
     KLib::memset(pd, 0x0, 0x1000);
 
     if (!(pd[PD_ID(virtualAddr)] & ptePresent))
     {
-        pd[PD_ID(virtualAddr)] = createPte(pmmAlloc(), flags);
+        pd[PD_ID(virtualAddr)] = createPte(pmmAlloc(), 0);
     }
     pt = reinterpret_cast<uint64_t *>((pd[PD_ID(virtualAddr)] & pteAddress) + hhdmOffset);
     KLib::memset(pt, 0x0, 0x1000);

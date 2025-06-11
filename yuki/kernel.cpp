@@ -150,12 +150,7 @@ extern "C" void kernelMain()
 
     initPmm(memoryMap, hhdm);
 
-    uint64_t *test = (uint64_t *)(hhdm + pmmAlloc());
-    *test = 64;
-
-    initVmm(memoryMap, hhdm);
-
-    mapPages(0x10000, 0x10000, 0x2, 0xf000); // Map arbitrary area for testing
+    std::uint64_t test = pmmAlloc();
 
     // We're done, just hang...
     hcf();

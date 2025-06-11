@@ -112,7 +112,7 @@ void mapPage(uint64_t virtualAddr, uint64_t physicalAddr, uint64_t flags)
     pt[PT_ID(virtualAddr)] = createPte(physicalAddr, flags);
 }
 
-void mapPages(uint64_t virtualStart, uint64_t physicalStart, uint8_t flags, uint64_t count)
+void mapPages(uint64_t virtualStart, uint64_t physicalStart, uint64_t flags, uint64_t count)
 {
     if (virtualStart % 0x1000 != 0 || physicalStart % 0x1000 != 0 || count % 0x1000 != 0)
     {

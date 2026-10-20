@@ -122,6 +122,7 @@ DTR gdtr;
 IDT_ENTRY idt[256];
 DTR idtr;
 
+bool fbExists{};
 limine_framebuffer *framebuffer;
 
 // The following stubs are required by the Itanium C++ ABI (the one we use,
@@ -161,16 +162,22 @@ extern "C" bool halInterruptsEnabled()
 
 void hal::initialize()
 {
+    // TODO: make this bootloader agnostic
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limineBaseRevision) == false) {
         hal::haltCpu();
     }
 
+    hal::initializeSerial(COM1);
+
     // Ensure we got a framebuffer.
     if (limineFramebufferRequest.response == nullptr
      || limineFramebufferRequest.response->framebuffer_count < 1) {
-        hal::haltCpu();
+        hal::writeStringToSerial(COM1, "No framebuffer could be found!");
+        fbExists = false;
     }
+    else
+        fbExists = true;
 
     // Fetch the first framebuffer.
     framebuffer = limineFramebufferRequest.response->framebuffers[0];
@@ -191,8 +198,6 @@ void hal::initialize()
         0,
         0
     );
-
-    hal::initializeSerial(COM1);
 }
 
 SPINLOCK lock{};
@@ -224,7 +229,8 @@ void cpuStart(limine_mp_info *MpInfo)
 
 void hal::printString(const char *String)
 {
-    flanterm_write(flantermContext, String, strlen(String));
+    if (fbExists)
+        flanterm_write(flantermContext, String, strlen(String));
     hal::writeStringToSerial(COM1, String);
 }
 
@@ -288,6 +294,7 @@ void hal::initCpu()
     ke::print("CPU Initialized!\r\n");
 }
 
+// TODO: abstract this
 void hal::setRsp0(uintptr_t rsp0) {
     tss.rsp0 = rsp0;
 }

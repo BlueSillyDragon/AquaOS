@@ -159,6 +159,7 @@ extern "C" bool halInterruptsEnabled()
     return enabled;
 }
 
+// TODO: remove usage of ke::log()
 
 void hal::initialize()
 {
@@ -198,6 +199,8 @@ void hal::initialize()
         0,
         0
     );
+
+    hal::writeStringToSerial(COM1, "HAL has initialized!\r\n");
 }
 
 SPINLOCK lock{};
@@ -301,6 +304,8 @@ void hal::setRsp0(uintptr_t rsp0) {
 
 void hal::initSmp()
 {
+    // TODO: Maybe manual AP init? I don't know if I'll have Snowboot start-up the other cores yet.
+
     limine_mp_response *mpResponse = limineMpRequest.response;
     if (mpResponse->cpu_count == 1)
     {
@@ -334,8 +339,8 @@ uint64_t hal::retrieveHhdmOffset()
 
 limine_memmap_response *hal::retrieveMemoryMap()
 {
-    limine_memmap_response *MemoryMap = limineMemoryMapRequest.response;
-    return MemoryMap;
+    limine_memmap_response *memoryMap = limineMemoryMapRequest.response;
+    return memoryMap;
 }
 
 uintptr_t hal::retrieveRsdpPhysicalAddress()
